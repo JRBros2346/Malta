@@ -77,13 +77,13 @@ fn main() -> Result<()> {
 
     unsafe { ShowWindow(hwnd, SHOW_WINDOW_CMD(nCmdShow as u32)) };
 
-    // Run the message loop.
-    let mut message: MSG = Default::default();
-    while unsafe { GetMessageW(&mut message, hwnd, 0, 0) }.0 > BOOL(0).0
+    // Run the msg loop.
+    let mut msg: MSG = Default::default();
+    while unsafe { GetMessageW(&mut msg, hwnd, 0, 0) }.0 > BOOL(0).0
     {
         unsafe {
-            TranslateMessage(&message);
-            DispatchMessageW(&message);
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }
 
