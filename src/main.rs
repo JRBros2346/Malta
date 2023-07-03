@@ -37,16 +37,14 @@ unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lPa
 fn main() -> Result<()> {
     let hInstance: HMODULE = unsafe { GetModuleHandleW(None)? };
 
-    let hPrevInstance: Option<HMODULE> = None;
-
-    let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() as PCWSTR };
+    let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
 
     let mut wStartupInfo: STARTUPINFOW = Default::default();
     unsafe { GetStartupInfoW(&mut wStartupInfo) };
     let nCmdShow: i32 = wStartupInfo.wShowWindow as i32;
 
     // Register the window class.
-    let class_name: PCWSTR = PCWSTR::from_raw(w!("malta_window_class").as_ptr() as *const u16);
+    let class_name: PCWSTR = PCWSTR::from_raw(w!("malta_window_class").as_ptr());
 
     let mut window_class: WNDCLASSW = Default::default();
 
@@ -62,7 +60,7 @@ fn main() -> Result<()> {
         CreateWindowExW (
             WINDOW_EX_STYLE(0),
             class_name,
-            PCWSTR::from_raw(w!("Malta").as_ptr() as *const u16),
+            PCWSTR::from_raw(w!("Malta").as_ptr()),
             WS_OVERLAPPEDWINDOW,
 
             // Size and position
@@ -79,7 +77,7 @@ fn main() -> Result<()> {
 
     // Run the msg loop.
     let mut msg: MSG = Default::default();
-    while unsafe { GetMessageW(&mut msg, hwnd, 0, 0) }.0 > BOOL(0).0
+    while unsafe { GetMessageW(&mut msg, None, 0, 0) }.as_bool() 
     {
         unsafe {
             TranslateMessage(&msg);
