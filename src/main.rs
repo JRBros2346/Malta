@@ -31,7 +31,6 @@ unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lPa
         }
         _ => DefWindowProcW(hwnd, uMsg, wParam, lParam)
     }
-    
 }
 
 fn main() -> Result<()> {
