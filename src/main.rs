@@ -13,9 +13,16 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
     match uMsg {
+        WM_CLOSE => {
+            if MessageBoxW(hwnd, PCWSTR::from_raw(w!("Quit?").as_ptr()), PCWSTR::from_raw(w!("Malta").as_ptr()), MB_OKCANCEL) == IDOK {
+                unsafe { DestroyWindow(hwnd); }
+                return LRESULT(0);
+            }
+            LRESULT(0)
+        }
         WM_DESTROY => {
             PostQuitMessage(0);
-            return LRESULT(0);
+            LRESULT(0)
         }
         WM_PAINT => {
             let mut paint_struct: PAINTSTRUCT = Default::default();
@@ -27,16 +34,18 @@ unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lPa
 
             EndPaint(hwnd, &paint_struct);
 
-            return LRESULT(0);
+            LRESULT(0)
         }
         _ => DefWindowProcW(hwnd, uMsg, wParam, lParam)
     }
 }
 
+struct State;
+
 fn main() -> Result<()> {
     let hInstance: HMODULE = unsafe { GetModuleHandleW(None)? };
 
-    let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
+    // let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
 
     let mut wStartupInfo: STARTUPINFOW = Default::default();
     unsafe { GetStartupInfoW(&mut wStartupInfo) };
