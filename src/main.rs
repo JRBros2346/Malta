@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+// #![allow(non_snake_case)]
 
 use windows::core::*;
 use windows::Win32::Foundation::*;
@@ -11,7 +11,37 @@ use windows::Win32::System::{
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
 
-unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lParam: LPARAM) -> LRESULT {
+struct State;
+impl Default for State {
+    fn default() -> Self {
+        State
+    }
+}
+
+#[inline]
+fn get_app_state(hwnd: HWND) -> *const State {
+    let ptr: isize = unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) };
+    let state_ptr: *const State = ptr as *const State;
+    return state_ptr;
+}
+
+unsafe extern "system" fn window_proc(
+        #[allow(non_snake_case)]
+        hwnd: HWND, 
+        #[allow(non_snake_case)]
+        uMsg: u32, 
+        #[allow(non_snake_case)]
+        wParam: WPARAM, 
+        #[allow(non_snake_case)]
+        lParam: LPARAM) -> LRESULT {
+    let state_ptr: *const State;
+    if uMsg == WM_CREATE {
+        let create_ptr: *const CREATESTRUCTW = &lParam as *const _ as *const CREATESTRUCTW;
+        state_ptr = (*create_ptr).lpCreateParams as *const State;
+        SetWindowLongPtrW(hwnd, GWLP_USERDATA, state_ptr as isize);
+    } else {
+        state_ptr = get_app_state(hwnd);
+    }
     match uMsg {
         WM_CLOSE => {
             if MessageBoxW(hwnd, PCWSTR::from_raw(w!("Quit?").as_ptr()), PCWSTR::from_raw(w!("Malta").as_ptr()), MB_OKCANCEL) == IDOK {
@@ -40,15 +70,18 @@ unsafe extern "system" fn window_proc(hwnd: HWND, uMsg: u32, wParam: WPARAM, lPa
     }
 }
 
-struct State;
-
 fn main() -> Result<()> {
+    #[allow(non_snake_case)]
     let hInstance: HMODULE = unsafe { GetModuleHandleW(None)? };
 
-    // let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
+    #[allow(non_snake_case)]
+    #[allow(unused_variables)]
+    let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
 
+    #[allow(non_snake_case)]
     let mut wStartupInfo: STARTUPINFOW = Default::default();
     unsafe { GetStartupInfoW(&mut wStartupInfo) };
+    #[allow(non_snake_case)]
     let nCmdShow: i32 = wStartupInfo.wShowWindow as i32;
 
     // Register the window class.
@@ -64,6 +97,8 @@ fn main() -> Result<()> {
 
     // Create the window.
     
+    let state: State = Default::default();
+
     let hwnd: HWND = unsafe{
         CreateWindowExW (
             WINDOW_EX_STYLE(0),
@@ -77,7 +112,7 @@ fn main() -> Result<()> {
             None,       // Parent window
             None,       // Menu
             hInstance,  // Instance handle
-            None,       // Additional application data
+            Some(&state as *const _ as *const std::ffi::c_void),       // Additional application data
         )
     };
 
