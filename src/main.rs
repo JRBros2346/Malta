@@ -8,6 +8,7 @@ use windows::Win32::System::{
     Threading::{GetStartupInfoW, STARTUPINFOW},
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
+use windows::Win32::System::Com::*;
 
 struct State;
 impl Default for State {
