@@ -6,31 +6,72 @@ use windows::Win32::System::{
     LibraryLoader::GetModuleHandleW,
     Environment::GetCommandLineW,
     Threading::{GetStartupInfoW, STARTUPINFOW},
+    Diagnostics::Debug::MessageBeep,
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
 // use windows::Win32::System::Com::*;
 
-struct State;
+const FILE_MENU_NEW: usize = 11;
+const FILE_MENU_EXIT: usize = 13;
+const HELP_MENU: usize = 20;
+
+struct State {
+    menu: HMENU,
+}
+impl State {
+    fn add_menus(&mut self, wnd: HWND) -> Result<()> {
+        self.menu = unsafe { CreateMenu() }?;
+        let file_menu: HMENU = unsafe { CreateMenu() }?;
+        let sub_menu: HMENU = unsafe { CreateMenu() }?;
+
+        unsafe { AppendMenuW(sub_menu, MF_STRING, 0, w!("SubMenu Item")) };
+
+        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_NEW, w!("New")) };
+        unsafe { AppendMenuW(file_menu, MF_POPUP, sub_menu.0 as usize, w!("Open Submenu")) };
+        unsafe { AppendMenuW(file_menu, MF_SEPARATOR, 0, None) };
+        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_EXIT, w!("Exit")) };
+
+        unsafe { AppendMenuW(self.menu, MF_POPUP, file_menu.0 as usize, w!("File")) };
+        unsafe { AppendMenuW(self.menu, MF_STRING, HELP_MENU, w!("Help")) };
+
+        unsafe { SetMenu(wnd, self.menu); }
+        Ok(())
+    }
+}
 impl Default for State {
     fn default() -> Self {
-        State
+        State {
+            menu: Default::default(),
+        }
     }
 }
 
 unsafe extern "system" fn window_procedure( wnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    let state_ptr: *const State;
+    let state_ptr: *mut State;
     if msg == WM_CREATE {
-        let create_ptr: *const CREATESTRUCTW = &lparam as *const _ as *const CREATESTRUCTW;
-        state_ptr = (*create_ptr).lpCreateParams as *const State;
+        state_ptr = (*(&lparam as *const _ as *const CREATESTRUCTW)).lpCreateParams as *mut State;
         SetWindowLongPtrW(wnd, GWLP_USERDATA, state_ptr as isize);
+        if let Some(e) = (*state_ptr).add_menus(wnd).err() {
+            eprintln!("Error creating menus: {:?}", e);
+        }
     } else {
-        state_ptr = unsafe { GetWindowLongPtrW(wnd, GWLP_USERDATA) } as *const State;
+        state_ptr = unsafe { GetWindowLongPtrW(wnd, GWLP_USERDATA) } as *mut State;
     }
     match msg {
         WM_CLOSE => {
             if MessageBoxW(wnd, w!("Quit?"), w!("Malta"), MB_OKCANCEL) == IDOK {
                 unsafe { DestroyWindow(wnd); }
                 return LRESULT(0);
+            }
+            LRESULT(0)
+        }
+        WM_COMMAND => {
+            match wparam.0 {
+                HELP_MENU => unsafe { MessageBeep(MB_OK); },
+                FILE_MENU_EXIT => unsafe { DestroyWindow(wnd); },
+                FILE_MENU_NEW => unsafe { MessageBeep(MB_ICONINFORMATION); },
+
+                _ => ()
             }
             LRESULT(0)
         }
