@@ -8,7 +8,7 @@ use windows::Win32::System::{
     Threading::{GetStartupInfoW, STARTUPINFOW},
 };
 use windows::Win32::UI::WindowsAndMessaging::*;
-use windows::Win32::System::Com::*;
+// use windows::Win32::System::Com::*;
 
 struct State;
 impl Default for State {
@@ -17,34 +17,19 @@ impl Default for State {
     }
 }
 
-#[inline]
-fn get_app_state(hwnd: HWND) -> *const State {
-    let ptr: isize = unsafe { GetWindowLongPtrW(hwnd, GWLP_USERDATA) };
-    let state_ptr: *const State = ptr as *const State;
-    return state_ptr;
-}
-
-unsafe extern "system" fn window_proc(
-        #[allow(non_snake_case)]
-        hwnd: HWND, 
-        #[allow(non_snake_case)]
-        uMsg: u32, 
-        #[allow(non_snake_case)]
-        wParam: WPARAM, 
-        #[allow(non_snake_case)]
-        lParam: LPARAM) -> LRESULT {
+unsafe extern "system" fn window_procedure( wnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     let state_ptr: *const State;
-    if uMsg == WM_CREATE {
-        let create_ptr: *const CREATESTRUCTW = &lParam as *const _ as *const CREATESTRUCTW;
+    if msg == WM_CREATE {
+        let create_ptr: *const CREATESTRUCTW = &lparam as *const _ as *const CREATESTRUCTW;
         state_ptr = (*create_ptr).lpCreateParams as *const State;
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, state_ptr as isize);
+        SetWindowLongPtrW(wnd, GWLP_USERDATA, state_ptr as isize);
     } else {
-        state_ptr = get_app_state(hwnd);
+        state_ptr = unsafe { GetWindowLongPtrW(wnd, GWLP_USERDATA) } as *const State;
     }
-    match uMsg {
+    match msg {
         WM_CLOSE => {
-            if MessageBoxW(hwnd, PCWSTR::from_raw(w!("Quit?").as_ptr()), PCWSTR::from_raw(w!("Malta").as_ptr()), MB_OKCANCEL) == IDOK {
-                unsafe { DestroyWindow(hwnd); }
+            if MessageBoxW(wnd, w!("Quit?"), w!("Malta"), MB_OKCANCEL) == IDOK {
+                unsafe { DestroyWindow(wnd); }
                 return LRESULT(0);
             }
             LRESULT(0)
@@ -55,44 +40,41 @@ unsafe extern "system" fn window_proc(
         }
         WM_PAINT => {
             let mut paint_struct: PAINTSTRUCT = Default::default();
-            let hdc: HDC = BeginPaint(hwnd, &mut paint_struct);
+            let hdc: HDC = BeginPaint(wnd, &mut paint_struct);
 
             // All painting occurs here, between BeginPaint and EndPaint.
 
             FillRect(hdc, &paint_struct.rcPaint, HBRUSH(COLOR_WINDOW.0 as isize + 1));
 
-            EndPaint(hwnd, &paint_struct);
+            EndPaint(wnd, &paint_struct);
 
             LRESULT(0)
         }
-        _ => DefWindowProcW(hwnd, uMsg, wParam, lParam)
+        _ => DefWindowProcW(wnd, msg, wparam, lparam)
     }
 }
 
 fn main() -> Result<()> {
-    #[allow(non_snake_case)]
-    let hInstance: HMODULE = unsafe { GetModuleHandleW(None)? };
+    let instance: HMODULE = unsafe { GetModuleHandleW(None) }?;
 
-    #[allow(non_snake_case)]
-    #[allow(unused_variables)]
-    let pCmdLine: PCWSTR = unsafe{ GetCommandLineW() };
+    let cmd_line: PCWSTR = unsafe{ GetCommandLineW() };
 
-    #[allow(non_snake_case)]
-    let mut wStartupInfo: STARTUPINFOW = Default::default();
-    unsafe { GetStartupInfoW(&mut wStartupInfo) };
-    #[allow(non_snake_case)]
-    let nCmdShow: i32 = wStartupInfo.wShowWindow as i32;
+    let mut startup_info: STARTUPINFOW = Default::default();
+    unsafe { GetStartupInfoW(&mut startup_info) };
+    let cmd_show: i32 = startup_info.wShowWindow as i32;
 
     // Register the window class.
-    let class_name: PCWSTR = PCWSTR::from_raw(w!("malta_window_class").as_ptr());
+    let class_name: PCWSTR = w!("malta_window_class");
 
     let mut window_class: WNDCLASSW = Default::default();
 
-    window_class.lpfnWndProc = Some(window_proc);
-    window_class.hInstance = hInstance;
+    window_class.lpfnWndProc = Some(window_procedure);
+    window_class.hInstance = instance;
     window_class.lpszClassName = class_name;
+    window_class.hbrBackground = HBRUSH(COLOR_WINDOW.0 as isize);
+    window_class.hCursor = unsafe { LoadCursorW(None, IDC_ARROW) }?;
 
-    unsafe{ RegisterClassW(&window_class); }
+    unsafe { RegisterClassW(&window_class); }
 
     // Create the window.
     
@@ -102,20 +84,20 @@ fn main() -> Result<()> {
         CreateWindowExW (
             WINDOW_EX_STYLE(0),
             class_name,
-            PCWSTR::from_raw(w!("Malta").as_ptr()),
-            WS_OVERLAPPEDWINDOW,
+            w!("Malta"),
+            WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 
             // Size and position
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 
             None,       // Parent window
             None,       // Menu
-            hInstance,  // Instance handle
+            instance,  // Instance handle
             Some(&state as *const _ as *const std::ffi::c_void),       // Additional application data
         )
     };
 
-    unsafe { ShowWindow(hwnd, SHOW_WINDOW_CMD(nCmdShow as u32)) };
+    unsafe { ShowWindow(hwnd, SHOW_WINDOW_CMD(cmd_show as u32)) };
 
     // Run the msg loop.
     let mut msg: MSG = Default::default();
