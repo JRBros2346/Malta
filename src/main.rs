@@ -11,12 +11,20 @@ use windows::Win32::System::{
 use windows::Win32::UI::WindowsAndMessaging::*;
 // use windows::Win32::System::Com::*;
 
-const FILE_MENU_NEW: usize = 11;
-const FILE_MENU_EXIT: usize = 13;
-const HELP_MENU: usize = 20;
+const FILE_MENU_NEW: usize = 110;
+const FILE_MENU_EXIT: usize = 130;
+const HELP_MENU: usize = 200;
+const CHANGE_TITLE: usize = 121;
 
+#[derive(Debug)]
+#[repr(C)]
 struct State {
     menu: HMENU,
+    // x: i32,
+    // y: i32,
+    width: i32,
+    height: i32,
+    edit: HWND,
 }
 impl State {
     fn add_menus(&mut self, wnd: HWND) -> Result<()> {
@@ -24,53 +32,89 @@ impl State {
         let file_menu: HMENU = unsafe { CreateMenu() }?;
         let sub_menu: HMENU = unsafe { CreateMenu() }?;
 
-        unsafe { AppendMenuW(sub_menu, MF_STRING, 0, w!("SubMenu Item")) };
+        unsafe { AppendMenuW(sub_menu, MF_STRING, CHANGE_TITLE, w!("Change Title")); }
 
-        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_NEW, w!("New")) };
-        unsafe { AppendMenuW(file_menu, MF_POPUP, sub_menu.0 as usize, w!("Open Submenu")) };
-        unsafe { AppendMenuW(file_menu, MF_SEPARATOR, 0, None) };
-        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_EXIT, w!("Exit")) };
+        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_NEW, w!("New")); }
+        unsafe { AppendMenuW(file_menu, MF_POPUP, sub_menu.0 as usize, w!("Open Submenu")); }
+        unsafe { AppendMenuW(file_menu, MF_SEPARATOR, 0, None); }
+        unsafe { AppendMenuW(file_menu, MF_STRING, FILE_MENU_EXIT, w!("Exit")); }
 
-        unsafe { AppendMenuW(self.menu, MF_POPUP, file_menu.0 as usize, w!("File")) };
-        unsafe { AppendMenuW(self.menu, MF_STRING, HELP_MENU, w!("Help")) };
+        unsafe { AppendMenuW(self.menu, MF_POPUP, file_menu.0 as usize, w!("File")); }
+        unsafe { AppendMenuW(self.menu, MF_STRING, HELP_MENU,  w!("Help")); }
 
         unsafe { SetMenu(wnd, self.menu); }
         Ok(())
+    }
+    fn add_controls(&mut self, wnd: HWND) {
+        unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE(0),
+                w!("static"),
+                w!("Enter text here: "),
+                WS_VISIBLE | WS_CHILD | WS_BORDER | WINDOW_STYLE(ES_CENTER as u32),
+                ((self.width as f32) / 2.) as i32 - 50,
+                100, 100, 50,
+                wnd, None, None, None);
+        }
+        self.edit = unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE(0),
+                w!("edit"),
+                w!("..."),
+                WS_VISIBLE | WS_CHILD | WS_BORDER | 
+                WINDOW_STYLE(ES_MULTILINE as u32) | WINDOW_STYLE(ES_AUTOVSCROLL as u32) | WINDOW_STYLE(ES_AUTOHSCROLL as u32),
+                ((self.width as f32) / 2.) as i32 - 50,
+                152, 100, 50,
+                wnd, None, None, None) };
+        println!("{:?}", self.edit);
     }
 }
 impl Default for State {
     fn default() -> Self {
         State {
             menu: Default::default(),
+            // x: Default::default(),
+            // y: Default::default(),
+            width: Default::default(),
+            height: Default::default(),
+            edit: Default::default(),
         }
     }
 }
 
 unsafe extern "system" fn window_procedure( wnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    let state_ptr: *mut State;
+    let state: *mut State;
     if msg == WM_CREATE {
-        state_ptr = (*(&lparam as *const _ as *const CREATESTRUCTW)).lpCreateParams as *mut State;
-        SetWindowLongPtrW(wnd, GWLP_USERDATA, state_ptr as isize);
-        if let Some(e) = (*state_ptr).add_menus(wnd).err() {
+        state = (*(&lparam as *const _ as *const CREATESTRUCTW)).lpCreateParams as *mut State;
+        SetWindowLongPtrW(wnd, GWLP_USERDATA, state as isize);
+        if let Some(e) = (*state).add_menus(wnd).err() {
             eprintln!("Error creating menus: {:?}", e);
         }
+        (*state).add_controls(wnd);
+        println!("{:?}", *state);
     } else {
-        state_ptr = unsafe { GetWindowLongPtrW(wnd, GWLP_USERDATA) } as *mut State;
+        state = GetWindowLongPtrW(wnd, GWLP_USERDATA) as *mut State;
     }
     match msg {
         WM_CLOSE => {
             if MessageBoxW(wnd, w!("Quit?"), w!("Malta"), MB_OKCANCEL) == IDOK {
-                unsafe { DestroyWindow(wnd); }
+                DestroyWindow(wnd);
                 return LRESULT(0);
             }
             LRESULT(0)
         }
         WM_COMMAND => {
             match wparam.0 {
-                HELP_MENU => unsafe { MessageBeep(MB_OK); },
-                FILE_MENU_EXIT => unsafe { DestroyWindow(wnd); },
-                FILE_MENU_NEW => unsafe { MessageBeep(MB_ICONINFORMATION); },
-
+                HELP_MENU => { MessageBeep(MB_OK); }
+                FILE_MENU_EXIT => { DestroyWindow(wnd); }
+                FILE_MENU_NEW => { MessageBeep(MB_ICONINFORMATION); }
+                CHANGE_TITLE => {
+                    println!("{:?}", *state);
+                    let mut text: [u16; 256] = [0; 256];
+                    GetWindowTextW((*state).edit, &mut text);
+                    println!("Title: {}", String::from_utf16(&text).unwrap_or(String::from("")));
+                    SetWindowTextW(wnd, PCWSTR::from_raw(text.as_ptr()));
+                }
                 _ => ()
             }
             LRESULT(0)
@@ -89,6 +133,13 @@ unsafe extern "system" fn window_procedure( wnd: HWND, msg: u32, wparam: WPARAM,
 
             EndPaint(wnd, &paint_struct);
 
+            LRESULT(0)
+        }
+        WM_SIZE => {
+            let mut rect: RECT = Default::default();
+             GetClientRect(wnd, &mut rect);
+            (*state).width = rect.right;
+            (*state).height = rect.bottom;
             LRESULT(0)
         }
         _ => DefWindowProcW(wnd, msg, wparam, lparam)
@@ -119,9 +170,9 @@ fn main() -> Result<()> {
 
     // Create the window.
     
-    let state: State = Default::default();
+    let mut state: State = Default::default();
 
-    let hwnd: HWND = unsafe{
+    let wnd: HWND = unsafe{
         CreateWindowExW (
             WINDOW_EX_STYLE(0),
             class_name,
@@ -137,17 +188,21 @@ fn main() -> Result<()> {
             Some(&state as *const _ as *const std::ffi::c_void),       // Additional application data
         )
     };
+    let mut rect: RECT = Default::default();
+    unsafe { GetClientRect(wnd, &mut rect); }
+    // state.x = wnd.x;
+    // state.y = wnd.y;
+    state.width = rect.right;
+    state.height = rect.bottom;
 
-    unsafe { ShowWindow(hwnd, SHOW_WINDOW_CMD(cmd_show as u32)) };
+    unsafe { ShowWindow(wnd, SHOW_WINDOW_CMD(cmd_show as u32)); }
 
     // Run the msg loop.
     let mut msg: MSG = Default::default();
     while unsafe { GetMessageW(&mut msg, None, 0, 0) }.as_bool() 
     {
-        unsafe {
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
-        }
+            unsafe { TranslateMessage(&msg); }
+            unsafe { DispatchMessageW(&msg); }
     }
 
     Result::Ok(())
