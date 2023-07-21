@@ -38,7 +38,7 @@ fn main() -> Result<()> {
     window.show(SHOW_WINDOW_CMD(cmd_show as u32));
 
     // Run the message loop.
-    let mut message = MSG::new();
+    let mut message = MSG::default();
     while message.get(None, 0, 0)?
     {
         message.translate();

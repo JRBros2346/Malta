@@ -8,15 +8,12 @@ mod messagebox_results;
 pub use messagebox_results::*;
 
 pub trait Message {
-    fn new() -> Self;
     fn get<P0: IntoParam<HWND>>(&mut self, window: P0, filter_min: u32, filter_max: u32) -> Result<bool>;
     fn translate(&self) -> bool;
     fn dispatch(&self) -> LRESULT;
 }
 
 impl Message for MSG {
-    #[inline]
-    fn new() -> Self { Default::default() }
     #[inline]
     fn get<P0: IntoParam<HWND>>(&mut self, window: P0, filter_min: u32, filter_max: u32) -> Result<bool> {
         match unsafe { GetMessageW(self, window, filter_min, filter_max) } {
