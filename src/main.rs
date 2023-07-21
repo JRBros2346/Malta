@@ -12,6 +12,8 @@ fn main() -> Result<()> {
     let mut window_class = WNDCLASSEXW::default();
 
     window_class.cbSize = std::mem::size_of::<WNDCLASSEXW>() as u32;
+    window_class.hbrBackground = HBRUSH(COLOR_WINDOW.0.try_into().unwrap());
+    window_class.hCursor = HCURSOR::load(None, IDC_ARROW)?;
     window_class.lpfnWndProc = Some(window_procedure);
     window_class.hInstance = instance;
     window_class.lpszClassName = CLASS_NAME;
@@ -66,7 +68,7 @@ extern "system" fn window_procedure(window: HWND, msg: u32, w_param: WPARAM, l_p
 
             // All painting occurs here, between BeginPaint and EndPaint.
 
-            fill_rect(device_context, &paint_struct.rcPaint, HBRUSH(COLOR_WINDOW.0 as isize + 1));
+            fill_rect(device_context, &paint_struct.rcPaint, HBRUSH(<i32 as TryInto<isize>>::try_into(COLOR_WINDOW.0).unwrap() + 1));
 
             end_paint(window, &paint_struct);
 

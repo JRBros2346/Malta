@@ -1,14 +1,10 @@
 pub use windows::core::*;
 pub use windows::Win32::Foundation::*;
 
-mod wndclass;
-pub use wndclass::*;
-mod wnd;
-pub use wnd::*;
-mod msg;
-pub use msg::*;
-mod wndproc;
-pub use wndproc::*;
+mod window;
+pub use window::*;
+mod message;
+pub use message::*;
 mod graphics;
 pub use graphics::*;
 
@@ -61,5 +57,5 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
 pub fn popup<T: Default>(e: Error) -> T {
     message_box(None, PCWSTR(e.message().as_ptr()), None, MB_OK).unwrap_or_else(popup);
 
-    Default::default()
+    T::default()
 }

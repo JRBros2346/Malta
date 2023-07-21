@@ -6,6 +6,8 @@ mod messagebox_styles;
 pub use messagebox_styles::*;
 mod messagebox_results;
 pub use messagebox_results::*;
+mod window_procedure;
+pub use window_procedure::*;
 
 pub trait Message {
     fn get<P0: IntoParam<HWND>>(&mut self, window: P0, filter_min: u32, filter_max: u32) -> Result<bool>;

@@ -2,6 +2,10 @@ use super::*;
 pub use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WINDOW_STYLE, HMENU, SHOW_WINDOW_CMD};
 use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow};
 
+mod cursor;
+pub use cursor::*;
+mod window_class;
+pub use window_class::*;
 mod window_styles;
 pub use window_styles::*;
 mod window_extended_styles;
