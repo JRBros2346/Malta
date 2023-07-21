@@ -2,6 +2,8 @@
 
 use malta::*;
 
+static mut MENU: HMENU = HMENU(0);
+
 fn main() -> Result<()> {
     let (instance, cmd_line, cmd_show) = set_entry_point()?;
     println!("{:?}", cmd_line);
@@ -29,7 +31,10 @@ fn main() -> Result<()> {
         WS_OVERLAPPEDWINDOW,
 
         // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
 
         None,       // Parent window
         None,       // Menu
@@ -50,12 +55,39 @@ fn main() -> Result<()> {
     Result::Ok(())
 }
 
+fn add_menus(window: HWND) -> Result<()> {
+    unsafe {
+        MENU = HMENU::new()?;
+
+        MENU.append(MF_STRING, 1, w!("File"))?;
+
+        window.set_menu(MENU)?;
+    }
+
+    Ok(())
+}
+
 extern "system" fn window_procedure(window: HWND, msg: u32, w_param: WPARAM, l_param: LPARAM) -> LRESULT {
     match msg {
         WM_CLOSE => {
             if message_box(window, w!("Quit?"), w!("Malta"), MB_OKCANCEL).unwrap_or_else(popup) == IDOK {
                 destroy_window(window).unwrap_or_else(popup);
             }
+            LRESULT(0)
+        }
+        WM_COMMAND => {
+            match w_param {
+                WPARAM(1) => {
+                    message_box(window, w!("File"), None, MB_OK).unwrap_or_else(popup);
+                }
+
+                _ => ()
+            }
+
+            LRESULT(0)
+        }
+        WM_CREATE => {
+            add_menus(window).unwrap_or_else(popup);
             LRESULT(0)
         }
         WM_DESTROY => {

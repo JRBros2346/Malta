@@ -1,6 +1,6 @@
 use super::*;
 pub use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WINDOW_STYLE, HMENU, SHOW_WINDOW_CMD};
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow};
+use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow, SetMenu};
 
 mod cursor;
 pub use cursor::*;
@@ -10,6 +10,8 @@ mod window_styles;
 pub use window_styles::*;
 mod window_extended_styles;
 pub use window_extended_styles::*;
+mod menu;
+pub use menu::*;
 pub use windows::Win32::UI::WindowsAndMessaging::CW_USEDEFAULT;
 
 pub trait Window {
@@ -33,8 +35,8 @@ pub trait Window {
         P2: IntoParam<HWND>,
         P3: IntoParam<HMENU>,
         P4: IntoParam<HMODULE>;
-
     fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool;
+    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()>;
 }
 
 impl Window for HWND {
@@ -67,7 +69,6 @@ impl Window for HWND {
 
         Ok(wnd)
     }
-
     #[inline]
     fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool {
         if unsafe { ShowWindow(self, cmd_show) } == BOOL(0) {
@@ -75,5 +76,13 @@ impl Window for HWND {
         } else {
             true
         }
+    }
+    #[inline]
+    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()> {
+        if unsafe { SetMenu(self, menu) } == BOOL(0) {
+            return Err(last_error());
+        }
+
+        Ok(())
     }
 }
