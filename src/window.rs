@@ -1,6 +1,6 @@
 use super::*;
 pub use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WINDOW_STYLE, HMENU, SHOW_WINDOW_CMD};
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow, SetMenu};
+use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow, SetMenu, DestroyWindow, GetClientRect, GetWindowTextW, SetWindowTextW};
 
 mod cursor;
 pub use cursor::*;
@@ -37,6 +37,43 @@ pub trait Window {
         P4: IntoParam<HMODULE>;
     fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool;
     fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()>;
+    fn destroy(self) -> Result<()>;
+    fn create_static<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>;
+    fn create_edit<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>;
+    fn get_text(self, buffer: &mut[u16]) -> Result<i32>;
+    fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()>;
 }
 
 impl Window for HWND {
@@ -71,18 +108,114 @@ impl Window for HWND {
     }
     #[inline]
     fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool {
-        if unsafe { ShowWindow(self, cmd_show) } == BOOL(0) {
-            false
-        } else {
-            true
-        }
+        unsafe { ShowWindow(self, cmd_show) }.as_bool()
     }
     #[inline]
     fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()> {
-        if unsafe { SetMenu(self, menu) } == BOOL(0) {
+        if !unsafe { SetMenu(self, menu) }.as_bool() {
             return Err(last_error());
         }
 
         Ok(())
     }
+    #[inline]
+    fn destroy(self) -> Result<()> {
+        if !unsafe { DestroyWindow(self) }.as_bool() {
+            return Err(last_error());
+        }
+
+        Ok(())
+    }
+    #[inline]
+    fn create_static<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>
+    {
+        Self::create(
+            ex_style,
+            w!("STATIC"),
+            window_name,
+            style,
+            x,
+            y,
+            width,
+            height,
+            self,
+            menu,
+            instance,
+            param
+        )
+    }
+    #[inline]
+    fn create_edit<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>
+    {
+        Self::create(
+            ex_style,
+            w!("EDIT"),
+            window_name,
+            style,
+            x,
+            y,
+            width,
+            height,
+            self,
+            menu,
+            instance,
+            param
+        )
+    }
+    fn get_text(self, buffer: &mut[u16]) -> Result<i32> {
+        let len = unsafe { GetWindowTextW(self, buffer) };
+        if len == 0 {
+            return Err(last_error());
+        }
+
+        Ok(len)
+    }
+    fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()> {
+        if !unsafe { SetWindowTextW(self, string) }.as_bool() {
+            return Err(last_error());
+        }
+
+        Ok(())
+    }
+}
+
+#[inline]
+pub fn get_client_rect(window: HWND, rect: &mut RECT) -> Result<()> {
+    if !unsafe { GetClientRect(window, rect) }.as_bool() {
+        return Err(last_error());
+    }
+
+    Ok(())
 }

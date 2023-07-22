@@ -49,7 +49,7 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
 
     let mut startup_info: STARTUPINFOW = Default::default();
     unsafe { GetStartupInfoW(&mut startup_info); }
-    let cmd_show: i32 = startup_info.wShowWindow as i32;
+    let cmd_show: i32 = startup_info.wShowWindow.into();
 
     Ok((instance, cmd_line, cmd_show))
 }

@@ -1,7 +1,7 @@
 use super::*;
 pub use windows::Win32::UI::WindowsAndMessaging::{MSG, MESSAGEBOX_STYLE, MESSAGEBOX_RESULT};
-use windows::Win32::UI::WindowsAndMessaging::{GetMessageW, TranslateMessage, DispatchMessageW, MessageBoxW, DestroyWindow, PostQuitMessage};
-// use windows::Win32::
+use windows::Win32::UI::WindowsAndMessaging::{GetMessageW, TranslateMessage, DispatchMessageW, MessageBoxW, PostQuitMessage};
+use windows::Win32::System::Diagnostics::Debug::MessageBeep;
 
 mod messagebox_styles;
 pub use messagebox_styles::*;
@@ -27,11 +27,7 @@ impl Message for MSG {
     }
     #[inline]
     fn translate(&self) -> bool {
-        if unsafe { TranslateMessage(self) } == BOOL(0) {
-            false
-        } else {
-            true
-        }
+        unsafe { TranslateMessage(self) }.as_bool()
     }
     #[inline]
     fn dispatch(&self) -> LRESULT {
@@ -60,8 +56,8 @@ where
 }
 
 #[inline]
-pub fn destroy_window<P0: IntoParam<HWND>>(window: P0) -> Result<()> {
-    if unsafe { DestroyWindow(window) } == BOOL(0) {
+pub fn message_beep(style: MESSAGEBOX_STYLE) -> Result<()> {
+    if !unsafe { MessageBeep(style) }.as_bool() {
         return Err(last_error());
     }
 
