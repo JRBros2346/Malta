@@ -40,9 +40,6 @@ pub trait Window {
         P2: IntoParam<HWND>,
         P3: IntoParam<HMENU>,
         P4: IntoParam<HMODULE>;
-    fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool;
-    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()>;
-    fn destroy(self) -> Result<()>;
     fn create_static<P0, P1, P2>(
         self,
         ex_style: WINDOW_EX_STYLE,
@@ -77,6 +74,26 @@ pub trait Window {
         P0: IntoParam<PCWSTR>,
         P1: IntoParam<HMENU>,
         P2: IntoParam<HMODULE>;
+    fn create_button<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>,
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>;
+    fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool;
+    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()>;
+    fn destroy(self) -> Result<()>;
     fn get_text(self, buffer: &mut [u16]) -> Result<i32>;
     fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()>;
 }
@@ -125,26 +142,6 @@ impl Window for HWND {
         }
 
         Ok(wnd)
-    }
-    #[inline]
-    fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool {
-        unsafe { ShowWindow(self, cmd_show) }.as_bool()
-    }
-    #[inline]
-    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()> {
-        if !unsafe { SetMenu(self, menu) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
-    }
-    #[inline]
-    fn destroy(self) -> Result<()> {
-        if !unsafe { DestroyWindow(self) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
     }
     #[inline]
     fn create_static<P0, P1, P2>(
@@ -213,6 +210,60 @@ impl Window for HWND {
             instance,
             param,
         )
+    }
+    #[inline]
+    fn create_button<P0, P1, P2>(
+        self,
+        ex_style: WINDOW_EX_STYLE,
+        window_name: P0,
+        style: WINDOW_STYLE,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        menu: P1,
+        instance: P2,
+        param: Option<*const std::ffi::c_void>,
+    ) -> Result<HWND>
+    where
+        P0: IntoParam<PCWSTR>,
+        P1: IntoParam<HMENU>,
+        P2: IntoParam<HMODULE>,
+    {
+        Self::create(
+            ex_style,
+            w!("BUTTON"),
+            window_name,
+            style,
+            x,
+            y,
+            width,
+            height,
+            self,
+            menu,
+            instance,
+            param,
+        )
+    }
+    #[inline]
+    fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool {
+        unsafe { ShowWindow(self, cmd_show) }.as_bool()
+    }
+    #[inline]
+    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()> {
+        if !unsafe { SetMenu(self, menu) }.as_bool() {
+            return Err(last_error());
+        }
+
+        Ok(())
+    }
+    #[inline]
+    fn destroy(self) -> Result<()> {
+        if !unsafe { DestroyWindow(self) }.as_bool() {
+            return Err(last_error());
+        }
+
+        Ok(())
     }
     fn get_text(self, buffer: &mut [u16]) -> Result<i32> {
         let len = unsafe { GetWindowTextW(self, buffer) };

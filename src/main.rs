@@ -4,9 +4,10 @@ use malta::*;
 use std::sync::RwLock;
 
 const FILE_MENU_NEW: usize = 110;
-const CHANGE_TITLE: usize = 121;
 const FILE_MENU_EXIT: usize = 140;
 const HELP_MENU: usize = 200;
+
+const CHANGE_TITLE: usize = 1000;
 
 struct State {
     menu: HMENU,
@@ -22,7 +23,7 @@ impl State {
         let file_menu = HMENU::create()?;
         let sub_menu = HMENU::create()?;
 
-        sub_menu.append(MF_STRING, CHANGE_TITLE, w!("Change Title"))?;
+        sub_menu.append(MF_STRING, 0, w!("SubMenu Item"))?;
 
         file_menu.append(MF_STRING, FILE_MENU_NEW, w!("New"))?;
         file_menu.append(MF_POPUP, sub_menu.0 as usize, w!("Open SubMenu"))?;
@@ -70,6 +71,19 @@ impl State {
             None,
         )?;
 
+        window.create_button(
+            WINDOW_EX_STYLE(0),
+            w!("Change Title"),
+            WS_VISIBLE | WS_CHILD,
+            self.width / 2 - 50,
+            204,
+            100,
+            50,
+            HMENU(CHANGE_TITLE as isize),
+            None,
+            None,
+        )?;
+
         Ok(())
     }
 
@@ -92,7 +106,9 @@ fn main() -> Result<()> {
     const CLASS_NAME: PCWSTR = w!("malta_window_class");
 
     let window_class = WNDCLASSEXW {
-        cbSize: std::mem::size_of::<WNDCLASSEXW>().try_into().expect("WNDCLASSEXW is Too Big..!"),
+        cbSize: std::mem::size_of::<WNDCLASSEXW>()
+            .try_into()
+            .expect("WNDCLASSEXW is Too Big..!"),
         hbrBackground: HBRUSH(COLOR_WINDOW.0.try_into().unwrap()),
         hCursor: HCURSOR::load(None, IDC_ARROW)?,
         lpfnWndProc: Some(window_procedure),
@@ -153,7 +169,7 @@ extern "system" fn window_procedure(
                 WPARAM(FILE_MENU_EXIT) => window.destroy().unwrap_or_else(popup),
                 WPARAM(FILE_MENU_NEW) => message_beep(MB_ICONINFORMATION).unwrap_or_else(popup),
                 WPARAM(CHANGE_TITLE) => {
-                    let mut buffer: [u16; 256] = [0; 256];
+                    let mut buffer = [0u16; 128];
                     state
                         .read()
                         .unwrap()
