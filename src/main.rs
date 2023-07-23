@@ -92,7 +92,7 @@ fn main() -> Result<()> {
     const CLASS_NAME: PCWSTR = w!("malta_window_class");
 
     let window_class = WNDCLASSEXW {
-        cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
+        cbSize: std::mem::size_of::<WNDCLASSEXW>().try_into().expect("WNDCLASSEXW is Too Big..!"),
         hbrBackground: HBRUSH(COLOR_WINDOW.0.try_into().unwrap()),
         hCursor: HCURSOR::load(None, IDC_ARROW)?,
         lpfnWndProc: Some(window_procedure),
@@ -197,7 +197,7 @@ extern "system" fn window_procedure(
             fill_rect(
                 device_context,
                 &paint_struct.rcPaint,
-                HBRUSH(<i32 as TryInto<isize>>::try_into(COLOR_WINDOW.0).unwrap() + 1),
+                HBRUSH((COLOR_WINDOW.0 + 1).try_into().unwrap()),
             );
 
             end_paint(window, &paint_struct);
