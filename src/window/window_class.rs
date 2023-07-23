@@ -1,6 +1,6 @@
 use super::*;
-pub use windows::Win32::UI::WindowsAndMessaging::WNDCLASSEXW;
 use windows::Win32::UI::WindowsAndMessaging::RegisterClassExW;
+pub use windows::Win32::UI::WindowsAndMessaging::WNDCLASSEXW;
 pub trait WindowClass {
     fn register(&self) -> Result<u16>;
 }

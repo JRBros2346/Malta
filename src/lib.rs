@@ -9,8 +9,8 @@ mod graphics;
 pub use graphics::*;
 
 use windows::Win32::System::{
-    LibraryLoader::GetModuleHandleExW,
     Environment::GetCommandLineW,
+    LibraryLoader::GetModuleHandleExW,
     Threading::{GetStartupInfoW, STARTUPINFOW},
 };
 use windows::Win32::UI::Shell::CommandLineToArgvW;
@@ -37,7 +37,8 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
     }
     let last = unsafe { first.offset(n.try_into().unwrap()) };
     let mut cursor = first;
-    let mut cmd_line = Vec::<String>::with_capacity(n.try_into().expect("Arguments List Maybe Negative!..."));
+    let mut cmd_line =
+        Vec::<String>::with_capacity(n.try_into().expect("Arguments List Maybe Negative!..."));
     while cursor != last {
         match unsafe { (*cursor).to_string() } {
             Ok(arg) => cmd_line.push(arg),
@@ -48,7 +49,9 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
     }
 
     let mut startup_info: STARTUPINFOW = Default::default();
-    unsafe { GetStartupInfoW(&mut startup_info); }
+    unsafe {
+        GetStartupInfoW(&mut startup_info);
+    }
     let cmd_show: i32 = startup_info.wShowWindow.into();
 
     Ok((instance, cmd_line, cmd_show))

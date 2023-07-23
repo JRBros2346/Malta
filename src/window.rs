@@ -1,6 +1,11 @@
 use super::*;
-pub use windows::Win32::UI::WindowsAndMessaging::{WINDOW_EX_STYLE, WINDOW_STYLE, HMENU, SHOW_WINDOW_CMD};
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, ShowWindow, SetMenu, DestroyWindow, GetClientRect, GetWindowTextW, SetWindowTextW};
+use windows::Win32::UI::WindowsAndMessaging::{
+    CreateWindowExW, DestroyWindow, GetClientRect, GetWindowTextW, SetMenu, SetWindowTextW,
+    ShowWindow,
+};
+pub use windows::Win32::UI::WindowsAndMessaging::{
+    HMENU, SHOW_WINDOW_CMD, WINDOW_EX_STYLE, WINDOW_STYLE,
+};
 
 mod cursor;
 pub use cursor::*;
@@ -27,7 +32,7 @@ pub trait Window {
         parent: P2,
         menu: P3,
         instance: P4,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -49,7 +54,7 @@ pub trait Window {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -66,13 +71,13 @@ pub trait Window {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
         P1: IntoParam<HMENU>,
         P2: IntoParam<HMODULE>;
-    fn get_text(self, buffer: &mut[u16]) -> Result<i32>;
+    fn get_text(self, buffer: &mut [u16]) -> Result<i32>;
     fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()>;
 }
 
@@ -90,7 +95,7 @@ impl Window for HWND {
         parent: P2,
         menu: P3,
         instance: P4,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<Self>
     where
         P0: IntoParam<PCWSTR>,
@@ -99,7 +104,22 @@ impl Window for HWND {
         P3: IntoParam<HMENU>,
         P4: IntoParam<HMODULE>,
     {
-        let wnd = unsafe { CreateWindowExW(ex_style, class_name, window_name, style, x, y, width, height, parent, menu, instance, param) };
+        let wnd = unsafe {
+            CreateWindowExW(
+                ex_style,
+                class_name,
+                window_name,
+                style,
+                x,
+                y,
+                width,
+                height,
+                parent,
+                menu,
+                instance,
+                param,
+            )
+        };
         if wnd == Self(0) {
             return Err(last_error());
         }
@@ -138,12 +158,12 @@ impl Window for HWND {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
         P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>
+        P2: IntoParam<HMODULE>,
     {
         Self::create(
             ex_style,
@@ -157,7 +177,7 @@ impl Window for HWND {
             self,
             menu,
             instance,
-            param
+            param,
         )
     }
     #[inline]
@@ -172,12 +192,12 @@ impl Window for HWND {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>
+        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
         P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>
+        P2: IntoParam<HMODULE>,
     {
         Self::create(
             ex_style,
@@ -191,10 +211,10 @@ impl Window for HWND {
             self,
             menu,
             instance,
-            param
+            param,
         )
     }
-    fn get_text(self, buffer: &mut[u16]) -> Result<i32> {
+    fn get_text(self, buffer: &mut [u16]) -> Result<i32> {
         let len = unsafe { GetWindowTextW(self, buffer) };
         if len == 0 {
             return Err(last_error());

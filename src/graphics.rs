@@ -1,6 +1,6 @@
 use super::*;
-pub use windows::Win32::Graphics::Gdi::{PAINTSTRUCT, HDC, HBRUSH};
-use windows::Win32::Graphics::Gdi::{BeginPaint, FillRect, EndPaint};
+use windows::Win32::Graphics::Gdi::{BeginPaint, EndPaint, FillRect};
+pub use windows::Win32::Graphics::Gdi::{HBRUSH, HDC, PAINTSTRUCT};
 
 mod colors;
 pub use colors::*;
@@ -15,9 +15,13 @@ pub fn fill_rect<P0, P1>(device_context: P0, rect: &RECT, brush: P1) -> i32
 where
     P0: IntoParam<HDC>,
     P1: IntoParam<HBRUSH>,
-{ unsafe { FillRect(device_context, rect, brush) } }
+{
+    unsafe { FillRect(device_context, rect, brush) }
+}
 
 #[inline]
 pub fn end_paint<P0: IntoParam<HWND>>(window: P0, paint_struct: &PAINTSTRUCT) {
-    unsafe { EndPaint(window, paint_struct); }
+    unsafe {
+        EndPaint(window, paint_struct);
+    }
 }

@@ -1,7 +1,9 @@
 use super::*;
-pub use windows::Win32::UI::WindowsAndMessaging::{MSG, MESSAGEBOX_STYLE, MESSAGEBOX_RESULT};
-use windows::Win32::UI::WindowsAndMessaging::{GetMessageW, TranslateMessage, DispatchMessageW, MessageBoxW, PostQuitMessage};
 use windows::Win32::System::Diagnostics::Debug::MessageBeep;
+use windows::Win32::UI::WindowsAndMessaging::{
+    DispatchMessageW, GetMessageW, MessageBoxW, PostQuitMessage, TranslateMessage,
+};
+pub use windows::Win32::UI::WindowsAndMessaging::{MESSAGEBOX_RESULT, MESSAGEBOX_STYLE, MSG};
 
 mod messagebox_styles;
 pub use messagebox_styles::*;
@@ -11,18 +13,28 @@ mod window_procedure;
 pub use window_procedure::*;
 
 pub trait Message {
-    fn get<P0: IntoParam<HWND>>(&mut self, window: P0, filter_min: u32, filter_max: u32) -> Result<bool>;
+    fn get<P0: IntoParam<HWND>>(
+        &mut self,
+        window: P0,
+        filter_min: u32,
+        filter_max: u32,
+    ) -> Result<bool>;
     fn translate(&self) -> bool;
     fn dispatch(&self) -> LRESULT;
 }
 
 impl Message for MSG {
     #[inline]
-    fn get<P0: IntoParam<HWND>>(&mut self, window: P0, filter_min: u32, filter_max: u32) -> Result<bool> {
+    fn get<P0: IntoParam<HWND>>(
+        &mut self,
+        window: P0,
+        filter_min: u32,
+        filter_max: u32,
+    ) -> Result<bool> {
         match unsafe { GetMessageW(self, window, filter_min, filter_max) } {
             BOOL(-1) => Err(last_error()),
             BOOL(0) => Ok(false),
-            _ => Ok(true)
+            _ => Ok(true),
         }
     }
     #[inline]
@@ -37,11 +49,18 @@ impl Message for MSG {
 
 #[inline]
 pub fn post_quit_message(exit_code: i32) {
-    unsafe { PostQuitMessage(exit_code); }
+    unsafe {
+        PostQuitMessage(exit_code);
+    }
 }
 
 #[inline]
-pub fn message_box<P0, P1, P2>(window: P0, text: P1, caption: P2, style: MESSAGEBOX_STYLE) -> Result<MESSAGEBOX_RESULT>
+pub fn message_box<P0, P1, P2>(
+    window: P0,
+    text: P1,
+    caption: P2,
+    style: MESSAGEBOX_STYLE,
+) -> Result<MESSAGEBOX_RESULT>
 where
     P0: IntoParam<HWND>,
     P1: IntoParam<PCWSTR>,

@@ -1,6 +1,6 @@
 use super::*;
-pub use windows::Win32::UI::WindowsAndMessaging::HCURSOR;
 use windows::Win32::UI::WindowsAndMessaging::LoadCursorW;
+pub use windows::Win32::UI::WindowsAndMessaging::HCURSOR;
 
 mod cursor_names;
 pub use cursor_names::*;
@@ -18,5 +18,7 @@ impl Cursor for HCURSOR {
     where
         P0: IntoParam<HMODULE>,
         P1: IntoParam<PCWSTR>,
-    { Ok(unsafe { LoadCursorW(instance, cursor_name) }?) }
+    {
+        Ok(unsafe { LoadCursorW(instance, cursor_name) }?)
+    }
 }
