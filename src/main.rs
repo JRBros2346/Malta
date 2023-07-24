@@ -224,52 +224,52 @@ extern "system" fn window_procedure(
 
             LRESULT(0)
         }
-        WM_SIZE => {
-            let x = loword![l_param.0] as i32;
-            let y = hiword![l_param.0] as i32;
-            {
-                let mut state_write = state.write().unwrap();
-                state_write.width = x;
-                state_write.height = y;
-            }
-            {
-                let state_read = state.read().unwrap();
-                state_read
-                    .field
-                    .set_pos(
-                        None,
-                        state_read.width / 2 - 50,
-                        100,
-                        100,
-                        50,
-                        SWP_SHOWWINDOW,
-                    )
-                    .unwrap_or_else(popup);
-                state_read
-                    .edit
-                    .set_pos(
-                        None,
-                        state_read.width / 2 - 50,
-                        152,
-                        100,
-                        50,
-                        SWP_SHOWWINDOW,
-                    )
-                    .unwrap_or_else(popup);
-                state_read
-                    .button
-                    .set_pos(
-                        None,
-                        state_read.width / 2 - 50,
-                        204,
-                        100,
-                        50,
-                        SWP_SHOWWINDOW,
-                    )
-                    .unwrap_or_else(popup);
-            }
-            LRESULT(0)
-        }
+        // WM_SIZE => {
+        //     let x = loword!(l_param.0) as i32;
+        //     let y = hiword!(l_param.0) as i32;
+        //     {
+        //         let mut state_write = state.write().unwrap();
+        //         state_write.width = x;
+        //         state_write.height = y;
+        //     }
+        //     {
+        //         let state_read = state.read().unwrap();
+        //         state_read
+        //             .field
+        //             .set_pos(
+        //                 None,
+        //                 state_read.width / 2 - 50,
+        //                 100,
+        //                 100,
+        //                 50,
+        //                 SWP_SHOWWINDOW,
+        //             )
+        //             .unwrap_or_else(popup);
+        //         state_read
+        //             .edit
+        //             .set_pos(
+        //                 None,
+        //                 state_read.width / 2 - 50,
+        //                 152,
+        //                 100,
+        //                 50,
+        //                 SWP_SHOWWINDOW,
+        //             )
+        //             .unwrap_or_else(popup);
+        //         state_read
+        //             .button
+        //             .set_pos(
+        //                 None,
+        //                 state_read.width / 2 - 50,
+        //                 204,
+        //                 100,
+        //                 50,
+        //                 SWP_SHOWWINDOW,
+        //             )
+        //             .unwrap_or_else(popup);
+        //     }
+        //     LRESULT(0)
+        // }
         _ => default_window_procedure(window, msg, w_param, l_param),
     }
 }

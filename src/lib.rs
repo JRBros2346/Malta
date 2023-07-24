@@ -66,10 +66,10 @@ pub fn popup<T: Default>(e: Error) -> T {
 
 #[macro_export]
 macro_rules! loword {
-    [$x:expr] => { ($x & 0xffff) as u32 }
+    ($x:expr) => { ($x & 0xffff) as u32 }
 }
 
 #[macro_export]
 macro_rules! hiword {
-    [$x:expr] => { (($x >> 16) & 0xffff) as u32 }
+    ($x:expr) => { (($x >> 16) & 0xffff) as u32 }
 }
