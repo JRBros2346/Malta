@@ -1,7 +1,7 @@
 // #![windows_subsystem = "windows"]
 
 use malta::*;
-use std::sync::RwLock;
+use std::cell::Cell;
 
 const FILE_MENU_NEW: usize = 110;
 const FILE_MENU_EXIT: usize = 140;
@@ -9,19 +9,20 @@ const HELP_MENU: usize = 200;
 
 const CHANGE_TITLE: usize = 1000;
 
+#[derive(Debug)]
 struct State {
-    menu: HMENU,
-    field: HWND,
-    edit: HWND,
-    button: HWND,
-    width: i32,
-    height: i32,
+    menu: Cell<HMENU>,
+    field: Cell<HWND>,
+    edit: Cell<HWND>,
+    button: Cell<HWND>,
+    width: Cell<i32>,
+    height: Cell<i32>,
 }
 #[allow(non_upper_case_globals)]
-static state: RwLock<State> = RwLock::new(State::new());
+const state: State = State::new();
 impl State {
-    fn add_menus(&mut self, window: HWND) -> Result<()> {
-        self.menu = HMENU::create()?;
+    fn add_menus(&self, window: HWND) -> Result<()> {
+        self.menu.set(HMENU::create()?);
         let file_menu = HMENU::create()?;
         let sub_menu = HMENU::create()?;
 
@@ -33,29 +34,30 @@ impl State {
         file_menu.append(MF_STRING, FILE_MENU_EXIT, w!("Exit"))?;
 
         self.menu
+            .get()
             .append(MF_POPUP, file_menu.0 as usize, w!("File"))?;
-        self.menu.append(MF_STRING, HELP_MENU, w!("Help"))?;
+        self.menu.get().append(MF_STRING, HELP_MENU, w!("Help"))?;
 
-        window.set_menu(self.menu)?;
+        window.set_menu(self.menu.get())?;
 
         Ok(())
     }
 
-    fn add_controls(&mut self, window: HWND) -> Result<()> {
-        self.field = window.create_static(
+    fn add_controls(&self, window: HWND) -> Result<()> {
+        self.field.set(window.create_static(
             WINDOW_EX_STYLE(0),
             w!("Enter Text Here: "),
             WS_VISIBLE | WS_CHILD | WS_BORDER | WINDOW_STYLE(ES_CENTER as u32),
-            self.width / 2 - 50,
+            self.width.get() / 2 - 50,
             100,
             100,
             50,
             None,
             None,
             None,
-        )?;
+        )?);
 
-        self.edit = window.create_edit(
+        self.edit.set(window.create_edit(
             WINDOW_EX_STYLE(0),
             w!("..."),
             WS_VISIBLE
@@ -64,27 +66,27 @@ impl State {
                 | WINDOW_STYLE(ES_MULTILINE as u32)
                 | WINDOW_STYLE(ES_AUTOVSCROLL as u32)
                 | WINDOW_STYLE(ES_AUTOHSCROLL as u32),
-            self.width / 2 - 50,
+            self.width.get() / 2 - 50,
             152,
             100,
             50,
             None,
             None,
             None,
-        )?;
+        )?);
 
-        self.button = window.create_button(
+        self.button.set(window.create_button(
             WINDOW_EX_STYLE(0),
             w!("Change Title"),
             WS_VISIBLE | WS_CHILD,
-            self.width / 2 - 50,
+            self.width.get() / 2 - 50,
             204,
             100,
             50,
             HMENU(CHANGE_TITLE as isize),
             None,
             None,
-        )?;
+        )?);
 
         Ok(())
     }
@@ -92,12 +94,12 @@ impl State {
     #[inline]
     const fn new() -> Self {
         State {
-            menu: HMENU(0),
-            field: HWND(0),
-            edit: HWND(0),
-            button: HWND(0),
-            width: 0,
-            height: 0,
+            menu: Cell::new(HMENU(0)),
+            field: Cell::new(HWND(0)),
+            edit: Cell::new(HWND(0)),
+            button: Cell::new(HWND(0)),
+            width: Cell::new(0),
+            height: Cell::new(0),
         }
     }
 }
@@ -146,7 +148,9 @@ fn main() -> Result<()> {
     // Run the message loop.
     let mut message = MSG::default();
     while message.get(None, 0, 0)? {
-        message.translate();
+        if message.translate() {
+            println!("{:#?}", state)
+        }
         message.dispatch();
     }
 
@@ -174,12 +178,7 @@ extern "system" fn window_procedure(
                 WPARAM(FILE_MENU_NEW) => message_beep(MB_ICONINFORMATION).unwrap_or_else(popup),
                 WPARAM(CHANGE_TITLE) => {
                     let mut buffer = [0u16; 128];
-                    state
-                        .read()
-                        .unwrap()
-                        .edit
-                        .get_text(&mut buffer)
-                        .unwrap_or_else(popup);
+                    state.edit.get().get_text(&mut buffer).unwrap_or_else(popup);
                     window
                         .set_text(PCWSTR(buffer.as_ptr()))
                         .unwrap_or_else(popup);
@@ -194,14 +193,11 @@ extern "system" fn window_procedure(
         WM_CREATE => {
             let mut rect = RECT::default();
             get_client_rect(window, &mut rect).unwrap_or_else(popup);
-            {
-                let mut state_write = state.write().unwrap();
-                state_write.width = rect.right;
-                state_write.height = rect.bottom;
+            state.width.set(rect.right);
+            state.height.set(rect.bottom);
 
-                state_write.add_menus(window).unwrap_or_else(popup);
-                state_write.add_controls(window).unwrap_or_else(popup);
-            }
+            state.add_menus(window).unwrap_or_else(popup);
+            state.add_controls(window).unwrap_or_else(popup);
             LRESULT(0)
         }
         WM_DESTROY => {
@@ -224,52 +220,47 @@ extern "system" fn window_procedure(
 
             LRESULT(0)
         }
-        // WM_SIZE => {
-        //     let x = loword!(l_param.0) as i32;
-        //     let y = hiword!(l_param.0) as i32;
-        //     {
-        //         let mut state_write = state.write().unwrap();
-        //         state_write.width = x;
-        //         state_write.height = y;
-        //     }
-        //     {
-        //         let state_read = state.read().unwrap();
-        //         state_read
-        //             .field
-        //             .set_pos(
-        //                 None,
-        //                 state_read.width / 2 - 50,
-        //                 100,
-        //                 100,
-        //                 50,
-        //                 SWP_SHOWWINDOW,
-        //             )
-        //             .unwrap_or_else(popup);
-        //         state_read
-        //             .edit
-        //             .set_pos(
-        //                 None,
-        //                 state_read.width / 2 - 50,
-        //                 152,
-        //                 100,
-        //                 50,
-        //                 SWP_SHOWWINDOW,
-        //             )
-        //             .unwrap_or_else(popup);
-        //         state_read
-        //             .button
-        //             .set_pos(
-        //                 None,
-        //                 state_read.width / 2 - 50,
-        //                 204,
-        //                 100,
-        //                 50,
-        //                 SWP_SHOWWINDOW,
-        //             )
-        //             .unwrap_or_else(popup);
-        //     }
-        //     LRESULT(0)
-        // }
+        WM_SIZE => {
+            state.width.set(loword!(l_param.0) as i32);
+            state.height.set(hiword!(l_param.0) as i32);
+            state
+                .field
+                .get()
+                .set_pos(
+                    None,
+                    state.width.get() / 2 - 50,
+                    100,
+                    100,
+                    50,
+                    SWP_SHOWWINDOW,
+                )
+                .unwrap_or_else(popup);
+            state
+                .edit
+                .get()
+                .set_pos(
+                    None,
+                    state.width.get() / 2 - 50,
+                    152,
+                    100,
+                    50,
+                    SWP_SHOWWINDOW,
+                )
+                .unwrap_or_else(popup);
+            state
+                .button
+                .get()
+                .set_pos(
+                    None,
+                    state.width.get() / 2 - 50,
+                    204,
+                    100,
+                    50,
+                    SWP_SHOWWINDOW,
+                )
+                .unwrap_or_else(popup);
+            LRESULT(0)
+        }
         _ => default_window_procedure(window, msg, w_param, l_param),
     }
 }
