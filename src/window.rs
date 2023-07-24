@@ -1,10 +1,14 @@
 use super::*;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DestroyWindow, GetClientRect, GetWindowTextW, SetMenu, SetWindowTextW,
-    ShowWindow,
+    CreateWindowExW, DestroyWindow, GetClientRect, GetWindowTextW, SetMenu, SetWindowPos,
+    SetWindowTextW, ShowWindow,
 };
 pub use windows::Win32::UI::WindowsAndMessaging::{
-    HMENU, SHOW_WINDOW_CMD, WINDOW_EX_STYLE, WINDOW_STYLE,
+    HMENU, SET_WINDOW_POS_FLAGS, SHOW_WINDOW_CMD, WINDOW_EX_STYLE, WINDOW_STYLE,
+};
+
+pub use windows::Win32::UI::WindowsAndMessaging::{
+    HWND_BOTTOM, HWND_DESKTOP, HWND_MESSAGE, HWND_NOTOPMOST, HWND_TOP, HWND_TOPMOST,
 };
 
 mod cursor;
@@ -17,6 +21,8 @@ mod window_extended_styles;
 pub use window_extended_styles::*;
 mod menu;
 pub use menu::*;
+mod set_window_position_flags;
+pub use set_window_position_flags::*;
 pub use windows::Win32::UI::WindowsAndMessaging::CW_USEDEFAULT;
 
 pub trait Window {
@@ -96,6 +102,15 @@ pub trait Window {
     fn destroy(self) -> Result<()>;
     fn get_text(self, buffer: &mut [u16]) -> Result<i32>;
     fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()>;
+    fn set_pos<P1: IntoParam<HWND>>(
+        self,
+        insert_after: P1,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        flags: SET_WINDOW_POS_FLAGS,
+    ) -> Result<()>;
 }
 
 impl Window for HWND {
@@ -265,6 +280,7 @@ impl Window for HWND {
 
         Ok(())
     }
+    #[inline]
     fn get_text(self, buffer: &mut [u16]) -> Result<i32> {
         let len = unsafe { GetWindowTextW(self, buffer) };
         if len == 0 {
@@ -273,8 +289,25 @@ impl Window for HWND {
 
         Ok(len)
     }
+    #[inline]
     fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()> {
         if !unsafe { SetWindowTextW(self, string) }.as_bool() {
+            return Err(last_error());
+        }
+
+        Ok(())
+    }
+    #[inline]
+    fn set_pos<P1: IntoParam<HWND>>(
+        self,
+        insert_after: P1,
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+        flags: SET_WINDOW_POS_FLAGS,
+    ) -> Result<()> {
+        if !unsafe { SetWindowPos(self, insert_after, x, y, width, height, flags) }.as_bool() {
             return Err(last_error());
         }
 

@@ -57,8 +57,19 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
     Ok((instance, cmd_line, cmd_show))
 }
 
+#[inline]
 pub fn popup<T: Default>(e: Error) -> T {
     message_box(None, PCWSTR(e.message().as_ptr()), None, MB_OK).unwrap_or_else(popup);
 
     T::default()
+}
+
+#[macro_export]
+macro_rules! loword {
+    [$x:expr] => { ($x & 0xffff) as u32 }
+}
+
+#[macro_export]
+macro_rules! hiword {
+    [$x:expr] => { (($x >> 16) & 0xffff) as u32 }
 }
