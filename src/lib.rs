@@ -24,6 +24,7 @@ pub fn last_error() -> Error {
 
 #[inline]
 pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
+    assert!(std::mem::size_of::<isize>() >= 32, "Target is 16-bit Architecture..!");
     let mut instance = HMODULE::default();
     if unsafe { GetModuleHandleExW(0, None, &mut instance) } == BOOL(0) {
         return Err(last_error());
@@ -38,7 +39,7 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
     let last = unsafe { first.offset(n.try_into().unwrap()) };
     let mut cursor = first;
     let mut cmd_line =
-        Vec::<String>::with_capacity(n.try_into().expect("Arguments List Maybe Negative!..."));
+        Vec::<String>::with_capacity(n.try_into().expect("Arguments List Length is Negative..!"));
     while cursor != last {
         match unsafe { (*cursor).to_string() } {
             Ok(arg) => cmd_line.push(arg),
