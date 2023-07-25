@@ -198,9 +198,11 @@ fn add_menus(window: HWND) -> Result<()> {
     file_menu.append(MF_SEPARATOR, 0, None)?;
     file_menu.append(MF_STRING, FILE_MENU_EXIT, w!("Exit"))?;
 
-    menu.lock()
-        .expect("Can't Acquire Lock..!")
-        .append(MF_POPUP, file_menu.0 as usize, w!("File"))?;
+    menu.lock().expect("Can't Acquire Lock..!").append(
+        MF_POPUP,
+        file_menu.0 as usize,
+        w!("File"),
+    )?;
     menu.lock()
         .expect("Can't Acquire Lock..!")
         .append(MF_STRING, HELP_MENU, w!("Help"))?;

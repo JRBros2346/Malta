@@ -24,9 +24,11 @@ pub fn last_error() -> Error {
 
 #[inline]
 pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
-    assert!(std::mem::size_of::<isize>() >= 32, "Target is 16-bit Architecture..!");
+    #[cfg(target_pointer_width = "16")]
+    panic!("Target is 16-bit Architecture..!");
+
     let mut instance = HMODULE::default();
-    if unsafe { GetModuleHandleExW(0, None, &mut instance) } == BOOL(0) {
+    if !unsafe { GetModuleHandleExW(0, None, &mut instance) }.as_bool() {
         return Err(last_error());
     }
 

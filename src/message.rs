@@ -13,25 +13,15 @@ mod window_procedure;
 pub use window_procedure::*;
 
 pub trait Message {
-    fn get<P0: IntoParam<HWND>>(
-        &mut self,
-        window: P0,
-        filter_min: u32,
-        filter_max: u32,
-    ) -> Result<bool>;
+    fn get<P0: IntoParam<HWND>>(&mut self, window: P0, min: u32, max: u32) -> Result<bool>;
     fn translate(&self) -> bool;
     fn dispatch(&self) -> LRESULT;
 }
 
 impl Message for MSG {
     #[inline]
-    fn get<P0: IntoParam<HWND>>(
-        &mut self,
-        window: P0,
-        filter_min: u32,
-        filter_max: u32,
-    ) -> Result<bool> {
-        match unsafe { GetMessageW(self, window, filter_min, filter_max) } {
+    fn get<P0: IntoParam<HWND>>(&mut self, window: P0, min: u32, max: u32) -> Result<bool> {
+        match unsafe { GetMessageW(self, window, min, max) } {
             BOOL(-1) => Err(last_error()),
             BOOL(0) => Ok(false),
             _ => Ok(true),
