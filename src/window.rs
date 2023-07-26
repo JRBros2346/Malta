@@ -445,7 +445,8 @@ impl Window for HWND {
                 rect.bottom,
                 flags,
             )
-        }.ok()
+        }
+        .ok()
     }
     #[inline]
     fn find_child<P0, P1, P2>(self, child_after: P0, class: P1, window: P2) -> Result<Self>

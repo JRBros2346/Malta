@@ -196,7 +196,7 @@ fn add_menus(window: HWND) -> Result<()> {
     let file_menu = HMENU::create()?;
     let sub_menu = HMENU::create()?;
 
-    sub_menu.append(HMENU::Append, 0, w!("SubMenu Item"))?;
+    sub_menu.append(HMENU::String, 0, w!("SubMenu Item"))?;
 
     file_menu.append(HMENU::String, FILE_MENU_NEW, w!("New"))?;
     file_menu.append(HMENU::Popup, sub_menu.0 as usize, w!("Open SubMenu"))?;
