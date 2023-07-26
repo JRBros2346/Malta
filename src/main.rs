@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     let window_class = WNDCLASSEXW {
         cbSize: std::mem::size_of::<WNDCLASSEXW>().try_into().unwrap(),
         hbrBackground: HBRUSH(COLOR_WINDOW.0.try_into().unwrap()),
-        hCursor: HCURSOR::load(None, IDC_ARROW)?,
+        hCursor: HCURSOR::load(None, HCURSOR::Arrow)?,
         lpfnWndProc: Some(window_procedure),
         hInstance: instance,
         lpszClassName: CLASS_NAME,
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
         WINDOW_EX_STYLE(0),
         CLASS_NAME,
         w!("Malta"),
-        WS_OVERLAPPEDWINDOW,
+        WINDOW_STYLE::OverlappedWindow,
         // Size and position
         RECT {
             left: CW_USEDEFAULT,
@@ -115,7 +115,7 @@ extern "system" fn window_procedure(
             add_menus(window).unwrap_or_else(popup);
 
             let mut rect = RECT::default();
-            get_client_rect(window, &mut rect).unwrap_or_else(popup);
+            window.get_client_rect(&mut rect).unwrap_or_else(popup);
             state.lock().expect("Can't Acquire Lock..!").width = rect.right;
             state.lock().expect("Can't Acquire Lock..!").height = rect.bottom;
 
@@ -155,7 +155,7 @@ extern "system" fn window_procedure(
                         right: 100,
                         bottom: 50,
                     },
-                    SWP_SHOWWINDOW,
+                    SET_WINDOW_POS_FLAGS::ShowWindow,
                 )
                 .unwrap_or_else(popup);
             edit.lock()
@@ -168,7 +168,7 @@ extern "system" fn window_procedure(
                         right: 100,
                         bottom: 50,
                     },
-                    SWP_SHOWWINDOW,
+                    SET_WINDOW_POS_FLAGS::ShowWindow,
                 )
                 .unwrap_or_else(popup);
             button
@@ -182,7 +182,7 @@ extern "system" fn window_procedure(
                         right: 100,
                         bottom: 50,
                     },
-                    SWP_SHOWWINDOW,
+                    SET_WINDOW_POS_FLAGS::ShowWindow,
                 )
                 .unwrap_or_else(popup);
             LRESULT(0)
@@ -196,21 +196,21 @@ fn add_menus(window: HWND) -> Result<()> {
     let file_menu = HMENU::create()?;
     let sub_menu = HMENU::create()?;
 
-    sub_menu.append(MF_STRING, 0, w!("SubMenu Item"))?;
+    sub_menu.append(HMENU::Append, 0, w!("SubMenu Item"))?;
 
-    file_menu.append(MF_STRING, FILE_MENU_NEW, w!("New"))?;
-    file_menu.append(MF_POPUP, sub_menu.0 as usize, w!("Open SubMenu"))?;
-    file_menu.append(MF_SEPARATOR, 0, None)?;
-    file_menu.append(MF_STRING, FILE_MENU_EXIT, w!("Exit"))?;
+    file_menu.append(HMENU::String, FILE_MENU_NEW, w!("New"))?;
+    file_menu.append(HMENU::Popup, sub_menu.0 as usize, w!("Open SubMenu"))?;
+    file_menu.append(HMENU::Separator, 0, None)?;
+    file_menu.append(HMENU::String, FILE_MENU_EXIT, w!("Exit"))?;
 
     menu.lock().expect("Can't Acquire Lock..!").append(
-        MF_POPUP,
+        HMENU::Popup,
         file_menu.0 as usize,
         w!("File"),
     )?;
     menu.lock()
         .expect("Can't Acquire Lock..!")
-        .append(MF_STRING, HELP_MENU, w!("Help"))?;
+        .append(HMENU::String, HELP_MENU, w!("Help"))?;
 
     window.set_menu(*menu.lock().expect("Can't Acquire Lock..!"))?;
 
@@ -221,7 +221,10 @@ fn add_controls(window: HWND) -> Result<()> {
     *field.lock().expect("Can't Acquire Lock..!") = window.create_static(
         WINDOW_EX_STYLE(0),
         w!("Enter Text Here: "),
-        WS_VISIBLE | WS_CHILD | WS_BORDER | WINDOW_STYLE(ES_CENTER as u32),
+        WINDOW_STYLE::Visible
+            | WINDOW_STYLE::Child
+            | WINDOW_STYLE::Border
+            | WINDOW_STYLE::EditCenter,
         RECT {
             left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
             top: 100,
@@ -234,12 +237,12 @@ fn add_controls(window: HWND) -> Result<()> {
     *edit.lock().expect("Can't Acquire Lock..!") = window.create_edit(
         WINDOW_EX_STYLE(0),
         w!("..."),
-        WS_VISIBLE
-            | WS_CHILD
-            | WS_BORDER
-            | WINDOW_STYLE(ES_MULTILINE as u32)
-            | WINDOW_STYLE(ES_AUTOVSCROLL as u32)
-            | WINDOW_STYLE(ES_AUTOHSCROLL as u32),
+        WINDOW_STYLE::Visible
+            | WINDOW_STYLE::Child
+            | WINDOW_STYLE::Border
+            | WINDOW_STYLE::EditMultiline
+            | WINDOW_STYLE::EditAutoVerticalScroll
+            | WINDOW_STYLE::EditAutoHorizontalScroll,
         RECT {
             left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
             top: 152,
@@ -252,7 +255,7 @@ fn add_controls(window: HWND) -> Result<()> {
     *button.lock().expect("Can't Acquire Lock..!") = window.create_button(
         WINDOW_EX_STYLE(0),
         w!("Change Title"),
-        WS_VISIBLE | WS_CHILD,
+        WINDOW_STYLE::Visible | WINDOW_STYLE::Child,
         RECT {
             left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
             top: 204,
