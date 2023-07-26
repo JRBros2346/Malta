@@ -66,9 +66,5 @@ where
 
 #[inline]
 pub fn message_beep(style: MESSAGEBOX_STYLE) -> Result<()> {
-    if !unsafe { MessageBeep(style) }.as_bool() {
-        return Err(last_error());
-    }
-
-    Ok(())
+    unsafe { MessageBeep(style) }.ok()
 }

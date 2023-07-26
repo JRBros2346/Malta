@@ -85,10 +85,6 @@ impl Menu for HMENU {
         uid: usize,
         name: P0,
     ) -> Result<()> {
-        if !unsafe { AppendMenuW(self, flags, uid, name) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
+        unsafe { AppendMenuW(self, flags, uid, name) }.ok()
     }
 }

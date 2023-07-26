@@ -28,9 +28,7 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
     panic!("Target is 16-bit Architecture..!");
 
     let mut instance = HMODULE::default();
-    if !unsafe { GetModuleHandleExW(0, None, &mut instance) }.as_bool() {
-        return Err(last_error());
-    }
+    unsafe { GetModuleHandleExW(0, None, &mut instance) }.ok()?;
 
     let cmd_line = unsafe { GetCommandLineW() };
     let mut n = 0;

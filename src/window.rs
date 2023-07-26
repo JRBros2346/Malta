@@ -409,19 +409,11 @@ impl Window for HWND {
     }
     #[inline]
     fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()> {
-        if !unsafe { SetMenu(self, menu) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
+        unsafe { SetMenu(self, menu) }.ok()
     }
     #[inline]
     fn destroy(self) -> Result<()> {
-        if !unsafe { DestroyWindow(self) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
+        unsafe { DestroyWindow(self) }.ok()
     }
     #[inline]
     fn get_text(self, buffer: &mut [u16]) -> Result<i32> {
@@ -434,11 +426,7 @@ impl Window for HWND {
     }
     #[inline]
     fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()> {
-        if !unsafe { SetWindowTextW(self, string) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
+        unsafe { SetWindowTextW(self, string) }.ok()
     }
     #[inline]
     fn set_pos<P1: IntoParam<HWND>>(
@@ -447,7 +435,7 @@ impl Window for HWND {
         rect: RECT,
         flags: SET_WINDOW_POS_FLAGS,
     ) -> Result<()> {
-        if !unsafe {
+        unsafe {
             SetWindowPos(
                 self,
                 insert_after,
@@ -457,13 +445,7 @@ impl Window for HWND {
                 rect.bottom,
                 flags,
             )
-        }
-        .as_bool()
-        {
-            return Err(last_error());
-        }
-
-        Ok(())
+        }.ok()
     }
     #[inline]
     fn find_child<P0, P1, P2>(self, child_after: P0, class: P1, window: P2) -> Result<Self>
@@ -481,10 +463,6 @@ impl Window for HWND {
     }
     #[inline]
     fn get_client_rect(self, rect: &mut RECT) -> Result<()> {
-        if !unsafe { GetClientRect(self, rect) }.as_bool() {
-            return Err(last_error());
-        }
-
-        Ok(())
+        unsafe { GetClientRect(self, rect) }.ok()
     }
 }
