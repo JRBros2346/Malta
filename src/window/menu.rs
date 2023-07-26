@@ -9,9 +9,9 @@ pub trait Menu {
     fn create() -> Result<HMENU>;
     fn append<P0: IntoParam<PCWSTR>>(
         self,
-        flags: MENU_ITEM_FLAGS,
-        uid: usize,
-        name: P0,
+        _: MENU_ITEM_FLAGS,
+        _: usize,
+        _: P0,
     ) -> Result<()>;
 }
 

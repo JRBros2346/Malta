@@ -13,7 +13,7 @@ mod window_procedure;
 pub use window_procedure::*;
 
 pub trait Message {
-    fn get<P0: IntoParam<HWND>>(&mut self, window: P0, min: u32, max: u32) -> Result<bool>;
+    fn get<P0: IntoParam<HWND>>(&mut self, _: P0, _: u32, _: u32) -> Result<bool>;
     fn translate(&self) -> bool;
     fn dispatch(&self) -> LRESULT;
 }

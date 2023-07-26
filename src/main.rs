@@ -32,9 +32,7 @@ fn main() -> Result<()> {
     const CLASS_NAME: PCWSTR = w!("malta_window_class");
 
     let window_class = WNDCLASSEXW {
-        cbSize: std::mem::size_of::<WNDCLASSEXW>()
-            .try_into()
-            .expect("WNDCLASSEXW is Too Big..!"),
+        cbSize: std::mem::size_of::<WNDCLASSEXW>().try_into().unwrap(),
         hbrBackground: HBRUSH(COLOR_WINDOW.0.try_into().unwrap()),
         hCursor: HCURSOR::load(None, IDC_ARROW)?,
         lpfnWndProc: Some(window_procedure),
@@ -60,7 +58,6 @@ fn main() -> Result<()> {
         None,     // Parent window
         None,     // Menu
         instance, // Instance handle
-        None,     // Additional application data
     )?;
 
     window.show(SHOW_WINDOW_CMD(cmd_show as u32));
@@ -223,7 +220,6 @@ fn add_controls(window: HWND) -> Result<()> {
         50,
         None,
         None,
-        None,
     )?;
 
     *edit.lock().expect("Can't Acquire Lock..!") = window.create_edit(
@@ -241,7 +237,6 @@ fn add_controls(window: HWND) -> Result<()> {
         50,
         None,
         None,
-        None,
     )?;
 
     *button.lock().expect("Can't Acquire Lock..!") = window.create_button(
@@ -253,7 +248,6 @@ fn add_controls(window: HWND) -> Result<()> {
         100,
         50,
         HMENU(CHANGE_TITLE as isize),
-        None,
         None,
     )?;
 

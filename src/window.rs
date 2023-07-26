@@ -1,7 +1,7 @@
 use super::*;
 use windows::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DestroyWindow, GetClientRect, GetWindowTextW, SetMenu, SetWindowPos,
-    SetWindowTextW, ShowWindow,
+    CreateWindowExW, DestroyWindow, FindWindowExW, GetClientRect, GetWindowTextW, SetMenu,
+    SetWindowPos, SetWindowTextW, ShowWindow,
 };
 pub use windows::Win32::UI::WindowsAndMessaging::{
     HMENU, SET_WINDOW_POS_FLAGS, SHOW_WINDOW_CMD, WINDOW_EX_STYLE, WINDOW_STYLE,
@@ -27,18 +27,17 @@ pub use windows::Win32::UI::WindowsAndMessaging::CW_USEDEFAULT;
 
 pub trait Window {
     fn create<P0, P1, P2, P3, P4>(
-        ex_style: WINDOW_EX_STYLE,
-        class_name: P0,
-        window_name: P1,
-        style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        parent: P2,
-        menu: P3,
-        instance: P4,
-        param: Option<*const std::ffi::c_void>,
+        _: WINDOW_EX_STYLE,
+        _: P0,
+        _: P1,
+        _: WINDOW_STYLE,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: P2,
+        _: P3,
+        _: P4,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -48,16 +47,15 @@ pub trait Window {
         P4: IntoParam<HMODULE>;
     fn create_static<P0, P1, P2>(
         self,
-        ex_style: WINDOW_EX_STYLE,
-        window_name: P0,
-        style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-        param: Option<*const std::ffi::c_void>,
+        _: WINDOW_EX_STYLE,
+        _: P0,
+        _: WINDOW_STYLE,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: P1,
+        _: P2,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -65,16 +63,15 @@ pub trait Window {
         P2: IntoParam<HMODULE>;
     fn create_edit<P0, P1, P2>(
         self,
-        ex_style: WINDOW_EX_STYLE,
-        window_name: P0,
-        style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-        param: Option<*const std::ffi::c_void>,
+        _: WINDOW_EX_STYLE,
+        _: P0,
+        _: WINDOW_STYLE,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: P1,
+        _: P2,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -82,35 +79,39 @@ pub trait Window {
         P2: IntoParam<HMODULE>;
     fn create_button<P0, P1, P2>(
         self,
-        ex_style: WINDOW_EX_STYLE,
-        window_name: P0,
-        style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-        param: Option<*const std::ffi::c_void>,
+        _: WINDOW_EX_STYLE,
+        _: P0,
+        _: WINDOW_STYLE,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: P1,
+        _: P2,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
         P1: IntoParam<HMENU>,
         P2: IntoParam<HMODULE>;
-    fn show(self, cmd_show: SHOW_WINDOW_CMD) -> bool;
-    fn set_menu<P0: IntoParam<HMENU>>(self, menu: P0) -> Result<()>;
+    fn show(self, _: SHOW_WINDOW_CMD) -> bool;
+    fn set_menu<P0: IntoParam<HMENU>>(self, _: P0) -> Result<()>;
     fn destroy(self) -> Result<()>;
-    fn get_text(self, buffer: &mut [u16]) -> Result<i32>;
-    fn set_text<P0: IntoParam<PCWSTR>>(self, string: P0) -> Result<()>;
+    fn get_text(self, _: &mut [u16]) -> Result<i32>;
+    fn set_text<P0: IntoParam<PCWSTR>>(self, _: P0) -> Result<()>;
     fn set_pos<P1: IntoParam<HWND>>(
         self,
-        insert_after: P1,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        flags: SET_WINDOW_POS_FLAGS,
+        _: P1,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: i32,
+        _: SET_WINDOW_POS_FLAGS,
     ) -> Result<()>;
+    fn find_child<P0, P1, P2>(self, _: P0, _: P1, _: P2) -> Result<HWND>
+    where
+        P0: IntoParam<HWND>,
+        P1: IntoParam<PCWSTR>,
+        P2: IntoParam<PCWSTR>;
 }
 
 impl Window for HWND {
@@ -127,7 +128,6 @@ impl Window for HWND {
         parent: P2,
         menu: P3,
         instance: P4,
-        param: Option<*const std::ffi::c_void>,
     ) -> Result<Self>
     where
         P0: IntoParam<PCWSTR>,
@@ -149,7 +149,7 @@ impl Window for HWND {
                 parent,
                 menu,
                 instance,
-                param,
+                None,
             )
         };
         if wnd == Self(0) {
@@ -170,7 +170,6 @@ impl Window for HWND {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -189,7 +188,6 @@ impl Window for HWND {
             self,
             menu,
             instance,
-            param,
         )
     }
     #[inline]
@@ -204,7 +202,6 @@ impl Window for HWND {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -223,7 +220,6 @@ impl Window for HWND {
             self,
             menu,
             instance,
-            param,
         )
     }
     #[inline]
@@ -238,7 +234,6 @@ impl Window for HWND {
         height: i32,
         menu: P1,
         instance: P2,
-        param: Option<*const std::ffi::c_void>,
     ) -> Result<HWND>
     where
         P0: IntoParam<PCWSTR>,
@@ -257,7 +252,6 @@ impl Window for HWND {
             self,
             menu,
             instance,
-            param,
         )
     }
     #[inline]
@@ -312,6 +306,20 @@ impl Window for HWND {
         }
 
         Ok(())
+    }
+    #[inline]
+    fn find_child<P0, P1, P2>(self, child_after: P0, class: P1, window: P2) -> Result<HWND>
+    where
+        P0: IntoParam<HWND>,
+        P1: IntoParam<PCWSTR>,
+        P2: IntoParam<PCWSTR>,
+    {
+        let child = unsafe { FindWindowExW(self, child_after, class, window) };
+        if child == HWND(0) {
+            return Err(last_error());
+        }
+
+        Ok(child)
     }
 }
 
