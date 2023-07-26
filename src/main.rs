@@ -26,7 +26,7 @@ static state: Mutex<State> = Mutex::new(State {
 
 fn main() -> Result<()> {
     let (instance, cmd_line, cmd_show) = set_entry_point()?;
-    println!("{:?}", cmd_line);
+    println!("{cmd_line:?}");
 
     // Register the window class.
     const CLASS_NAME: PCWSTR = w!("malta_window_class");
@@ -51,10 +51,12 @@ fn main() -> Result<()> {
         w!("Malta"),
         WS_OVERLAPPEDWINDOW,
         // Size and position
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
-        CW_USEDEFAULT,
+        RECT {
+            left: CW_USEDEFAULT,
+            top: CW_USEDEFAULT,
+            right: CW_USEDEFAULT,
+            bottom: CW_USEDEFAULT,
+        },
         None,     // Parent window
         None,     // Menu
         instance, // Instance handle
@@ -147,10 +149,12 @@ extern "system" fn window_procedure(
                 .expect("Can't Acquire Lock..!")
                 .set_pos(
                     None,
-                    state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                    100,
-                    100,
-                    50,
+                    RECT {
+                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                        top: 100,
+                        right: 100,
+                        bottom: 50,
+                    },
                     SWP_SHOWWINDOW,
                 )
                 .unwrap_or_else(popup);
@@ -158,10 +162,12 @@ extern "system" fn window_procedure(
                 .expect("Can't Acquire Lock..!")
                 .set_pos(
                     None,
-                    state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                    152,
-                    100,
-                    50,
+                    RECT {
+                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                        top: 152,
+                        right: 100,
+                        bottom: 50,
+                    },
                     SWP_SHOWWINDOW,
                 )
                 .unwrap_or_else(popup);
@@ -170,10 +176,12 @@ extern "system" fn window_procedure(
                 .expect("Can't Acquire Lock..!")
                 .set_pos(
                     None,
-                    state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                    204,
-                    100,
-                    50,
+                    RECT {
+                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                        top: 204,
+                        right: 100,
+                        bottom: 50,
+                    },
                     SWP_SHOWWINDOW,
                 )
                 .unwrap_or_else(popup);
@@ -214,12 +222,13 @@ fn add_controls(window: HWND) -> Result<()> {
         WINDOW_EX_STYLE(0),
         w!("Enter Text Here: "),
         WS_VISIBLE | WS_CHILD | WS_BORDER | WINDOW_STYLE(ES_CENTER as u32),
-        state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-        100,
-        100,
-        50,
-        None,
-        None,
+        RECT {
+            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+            top: 100,
+            right: 100,
+            bottom: 50,
+        },
+        0,
     )?;
 
     *edit.lock().expect("Can't Acquire Lock..!") = window.create_edit(
@@ -231,24 +240,26 @@ fn add_controls(window: HWND) -> Result<()> {
             | WINDOW_STYLE(ES_MULTILINE as u32)
             | WINDOW_STYLE(ES_AUTOVSCROLL as u32)
             | WINDOW_STYLE(ES_AUTOHSCROLL as u32),
-        state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-        152,
-        100,
-        50,
-        None,
-        None,
+        RECT {
+            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+            top: 152,
+            right: 100,
+            bottom: 50,
+        },
+        0,
     )?;
 
     *button.lock().expect("Can't Acquire Lock..!") = window.create_button(
         WINDOW_EX_STYLE(0),
         w!("Change Title"),
         WS_VISIBLE | WS_CHILD,
-        state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-        204,
-        100,
-        50,
-        HMENU(CHANGE_TITLE as isize),
-        None,
+        RECT {
+            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+            top: 204,
+            right: 100,
+            bottom: 50,
+        },
+        CHANGE_TITLE as isize,
     )?;
 
     Ok(())

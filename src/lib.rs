@@ -51,7 +51,7 @@ pub fn set_entry_point() -> Result<(HMODULE, Vec<String>, i32)> {
         cursor = unsafe { cursor.offset(1) };
     }
 
-    let mut startup_info: STARTUPINFOW = Default::default();
+    let mut startup_info = STARTUPINFOW::default();
     unsafe {
         GetStartupInfoW(&mut startup_info);
     }

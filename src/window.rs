@@ -31,10 +31,7 @@ pub trait Window {
         _: P0,
         _: P1,
         _: WINDOW_STYLE,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: i32,
+        _: RECT,
         _: P2,
         _: P3,
         _: P4,
@@ -45,68 +42,36 @@ pub trait Window {
         P2: IntoParam<HWND>,
         P3: IntoParam<HMENU>,
         P4: IntoParam<HMODULE>;
-    fn create_static<P0, P1, P2>(
+    fn create_static<P0: IntoParam<PCWSTR>>(
         self,
         _: WINDOW_EX_STYLE,
         _: P0,
         _: WINDOW_STYLE,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: P1,
-        _: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>;
-    fn create_edit<P0, P1, P2>(
+        _: RECT,
+        _: isize,
+    ) -> Result<HWND>;
+    fn create_edit<P0: IntoParam<PCWSTR>>(
         self,
         _: WINDOW_EX_STYLE,
         _: P0,
         _: WINDOW_STYLE,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: P1,
-        _: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>;
-    fn create_button<P0, P1, P2>(
+        _: RECT,
+        _: isize,
+    ) -> Result<HWND>;
+    fn create_button<P0: IntoParam<PCWSTR>>(
         self,
         _: WINDOW_EX_STYLE,
         _: P0,
         _: WINDOW_STYLE,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: P1,
-        _: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>;
+        _: RECT,
+        _: isize,
+    ) -> Result<HWND>;
     fn show(self, _: SHOW_WINDOW_CMD) -> bool;
     fn set_menu<P0: IntoParam<HMENU>>(self, _: P0) -> Result<()>;
     fn destroy(self) -> Result<()>;
     fn get_text(self, _: &mut [u16]) -> Result<i32>;
     fn set_text<P0: IntoParam<PCWSTR>>(self, _: P0) -> Result<()>;
-    fn set_pos<P1: IntoParam<HWND>>(
-        self,
-        _: P1,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: i32,
-        _: SET_WINDOW_POS_FLAGS,
-    ) -> Result<()>;
+    fn set_pos<P1: IntoParam<HWND>>(self, _: P1, _: RECT, _: SET_WINDOW_POS_FLAGS) -> Result<()>;
     fn find_child<P0, P1, P2>(self, _: P0, _: P1, _: P2) -> Result<HWND>
     where
         P0: IntoParam<HWND>,
@@ -116,15 +81,13 @@ pub trait Window {
 
 impl Window for HWND {
     #[inline]
+    #[allow(clippy::too_many_arguments)]
     fn create<P0, P1, P2, P3, P4>(
         ex_style: WINDOW_EX_STYLE,
         class_name: P0,
         window_name: P1,
         style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
+        rect: RECT,
         parent: P2,
         menu: P3,
         instance: P4,
@@ -142,10 +105,10 @@ impl Window for HWND {
                 class_name,
                 window_name,
                 style,
-                x,
-                y,
-                width,
-                height,
+                rect.left,
+                rect.top,
+                rect.right,
+                rect.bottom,
                 parent,
                 menu,
                 instance,
@@ -159,99 +122,63 @@ impl Window for HWND {
         Ok(wnd)
     }
     #[inline]
-    fn create_static<P0, P1, P2>(
+    fn create_static<P0: IntoParam<PCWSTR>>(
         self,
         ex_style: WINDOW_EX_STYLE,
         window_name: P0,
         style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>,
-    {
+        rect: RECT,
+        id: isize,
+    ) -> Result<HWND> {
         Self::create(
             ex_style,
             w!("STATIC"),
             window_name,
             style,
-            x,
-            y,
-            width,
-            height,
+            rect,
             self,
-            menu,
-            instance,
+            HMENU(id),
+            None,
         )
     }
     #[inline]
-    fn create_edit<P0, P1, P2>(
+    fn create_edit<P0: IntoParam<PCWSTR>>(
         self,
         ex_style: WINDOW_EX_STYLE,
         window_name: P0,
         style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>,
-    {
+        rect: RECT,
+        id: isize,
+    ) -> Result<HWND> {
         Self::create(
             ex_style,
             w!("EDIT"),
             window_name,
             style,
-            x,
-            y,
-            width,
-            height,
+            rect,
             self,
-            menu,
-            instance,
+            HMENU(id),
+            None,
         )
     }
     #[inline]
-    fn create_button<P0, P1, P2>(
+    fn create_button<P0: IntoParam<PCWSTR>>(
         self,
         ex_style: WINDOW_EX_STYLE,
         window_name: P0,
         style: WINDOW_STYLE,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
-        menu: P1,
-        instance: P2,
-    ) -> Result<HWND>
-    where
-        P0: IntoParam<PCWSTR>,
-        P1: IntoParam<HMENU>,
-        P2: IntoParam<HMODULE>,
-    {
+        rect: RECT,
+        id: isize,
+    ) -> Result<HWND> {
         Self::create(
             ex_style,
             w!("BUTTON"),
             window_name,
             style,
-            x,
-            y,
-            width,
-            height,
+            rect,
             self,
-            menu,
-            instance,
+            HMENU(id),
+            None,
         )
     }
     #[inline]
@@ -295,13 +222,22 @@ impl Window for HWND {
     fn set_pos<P1: IntoParam<HWND>>(
         self,
         insert_after: P1,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
+        rect: RECT,
         flags: SET_WINDOW_POS_FLAGS,
     ) -> Result<()> {
-        if !unsafe { SetWindowPos(self, insert_after, x, y, width, height, flags) }.as_bool() {
+        if !unsafe {
+            SetWindowPos(
+                self,
+                insert_after,
+                rect.left,
+                rect.top,
+                rect.right,
+                rect.bottom,
+                flags,
+            )
+        }
+        .as_bool()
+        {
             return Err(last_error());
         }
 

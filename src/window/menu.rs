@@ -7,12 +7,7 @@ pub use menu_item_flags::*;
 
 pub trait Menu {
     fn create() -> Result<HMENU>;
-    fn append<P0: IntoParam<PCWSTR>>(
-        self,
-        _: MENU_ITEM_FLAGS,
-        _: usize,
-        _: P0,
-    ) -> Result<()>;
+    fn append<P0: IntoParam<PCWSTR>>(self, _: MENU_ITEM_FLAGS, _: usize, _: P0) -> Result<()>;
 }
 
 impl Menu for HMENU {
