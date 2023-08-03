@@ -54,4 +54,4 @@ macro_rules! hiword {
     };
 }
 
-pub use {loword, hiword};
+pub use {hiword, loword};
