@@ -1,6 +1,6 @@
 pub mod core;
 pub mod win32;
-pub use self::{core::*, win32::foundation::*};
+pub use {self::core::*, win32::foundation::*};
 
 #[inline]
 pub fn last_error() -> Error {

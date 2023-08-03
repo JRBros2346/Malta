@@ -1,4 +1,4 @@
-pub use super::*;
+pub use crate::winwrap::*;
 pub use windows::Win32::UI::Shell::*;
 
 pub fn command_line_to_argv<P0: IntoParam<PCWSTR>>(cmd_line: P0) -> Result<Vec<String>> {

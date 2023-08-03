@@ -1,4 +1,4 @@
-pub use super::*;
+pub use crate::winwrap::*;
 pub use windows::Win32::System::LibraryLoader::*;
 
 #[allow(clippy::not_unsafe_ptr_arg_deref)]
