@@ -57,7 +57,7 @@ where
 {
     create_window(
         extended_style,
-        w!("STATIC"),
+        w!("Static"),
         window_name,
         style,
         rect,
@@ -81,7 +81,7 @@ where
 {
     create_window(
         extended_style,
-        w!("EDIT"),
+        w!("Edit"),
         window_name,
         style,
         rect,
@@ -105,7 +105,31 @@ where
 {
     create_window(
         extended_style,
-        w!("BUTTON"),
+        w!("Button"),
+        window_name,
+        style,
+        rect,
+        parent,
+        HMENU(id),
+        None,
+    )
+}
+#[inline]
+pub fn create_combo_box_window<P0, P1>(
+    extended_style: WINDOW_EX_STYLE,
+    window_name: P0,
+    style: WINDOW_STYLE,
+    rect: RECT,
+    parent: P1,
+    id: isize,
+) -> Result<HWND>
+where
+    P0: IntoParam<PCWSTR>,
+    P1: IntoParam<HWND>,
+{
+    create_window(
+        extended_style,
+        w!("ComboBox"),
         window_name,
         style,
         rect,
@@ -290,4 +314,14 @@ pub fn register_class(window_class: &WNDCLASSEXW) -> Result<u16> {
     }
 
     Ok(atom)
+}
+
+#[inline]
+pub fn send_message<P0, P1, P2>(window: P0, message: u32, param_wide: P1, param_long: P2) -> LRESULT
+where
+    P0: IntoParam<HWND>,
+    P1: IntoParam<WPARAM>,
+    P2: IntoParam<LPARAM>,
+{
+    unsafe { SendMessageW(window, message, param_wide, param_long) }
 }
