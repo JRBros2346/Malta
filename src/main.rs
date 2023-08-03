@@ -10,10 +10,11 @@ const HELP_MENU: usize = 200;
 
 const CHANGE_TITLE: usize = 1000;
 
-static menu: Mutex<HMENU> = Mutex::new(HMENU(0));
-static field: Mutex<HWND> = Mutex::new(HWND(0));
-static edit: Mutex<HWND> = Mutex::new(HWND(0));
-static button: Mutex<HWND> = Mutex::new(HWND(0));
+static menu: Mutex<winwrap::win32::ui::windows_and_messaging::HMENU> =
+    Mutex::new(winwrap::win32::ui::windows_and_messaging::HMENU(0));
+static field: Mutex<winwrap::HWND> = Mutex::new(winwrap::HWND(0));
+static edit: Mutex<winwrap::HWND> = Mutex::new(winwrap::HWND(0));
+static button: Mutex<winwrap::HWND> = Mutex::new(winwrap::HWND(0));
 
 struct State {
     width: i32,
@@ -24,246 +25,334 @@ static state: Mutex<State> = Mutex::new(State {
     height: 0,
 });
 
-fn main() -> Result<()> {
-    let (instance, cmd_line, cmd_show) = set_entry_point()?;
+fn main() -> winwrap::Result<()> {
+    let (instance, cmd_line, cmd_show) = winwrap::set_entry_point()?;
     println!("{cmd_line:?}");
 
     // Register the window class.
-    const CLASS_NAME: PCWSTR = w!("malta_window_class");
+    const CLASS_NAME: winwrap::PCWSTR = winwrap::w!("malta_window_class");
 
-    let window_class = WNDCLASSEXW {
-        cbSize: std::mem::size_of::<WNDCLASSEXW>().try_into().unwrap(),
-        hbrBackground: HBRUSH(COLOR_WINDOW.0.try_into().unwrap()),
-        hCursor: HCURSOR::load(None, HCURSOR::Arrow)?,
+    let window_class = winwrap::win32::ui::windows_and_messaging::WNDCLASSEXW {
+        cbSize: std::mem::size_of::<winwrap::win32::ui::windows_and_messaging::WNDCLASSEXW>()
+            .try_into()
+            .unwrap(),
+        hbrBackground: winwrap::win32::graphics::gdi::HBRUSH(
+            winwrap::win32::graphics::gdi::COLOR_WINDOW
+                .0
+                .try_into()
+                .unwrap(),
+        ),
+        hCursor: winwrap::win32::ui::windows_and_messaging::load_cursor(
+            None,
+            winwrap::win32::ui::windows_and_messaging::IDC_ARROW,
+        )?,
         lpfnWndProc: Some(window_procedure),
         hInstance: instance,
         lpszClassName: CLASS_NAME,
-        ..WNDCLASSEXW::default()
+        ..winwrap::win32::ui::windows_and_messaging::WNDCLASSEXW::default()
     };
 
-    window_class.register()?;
+    winwrap::win32::ui::windows_and_messaging::register_class(&window_class)?;
 
     // Create the window.
 
-    let window = HWND::create(
-        WINDOW_EX_STYLE(0),
+    let window = winwrap::win32::ui::windows_and_messaging::create_window(
+        winwrap::win32::ui::windows_and_messaging::WINDOW_EX_STYLE(0),
         CLASS_NAME,
-        w!("Malta"),
-        WINDOW_STYLE::OverlappedWindow,
+        winwrap::w!("Malta"),
+        winwrap::win32::ui::windows_and_messaging::WS_OVERLAPPEDWINDOW,
         // Size and position
-        RECT {
-            left: CW_USEDEFAULT,
-            top: CW_USEDEFAULT,
-            right: CW_USEDEFAULT,
-            bottom: CW_USEDEFAULT,
+        winwrap::RECT {
+            left: winwrap::win32::ui::windows_and_messaging::CW_USEDEFAULT,
+            top: winwrap::win32::ui::windows_and_messaging::CW_USEDEFAULT,
+            right: winwrap::win32::ui::windows_and_messaging::CW_USEDEFAULT,
+            bottom: winwrap::win32::ui::windows_and_messaging::CW_USEDEFAULT,
         },
         None,     // Parent window
         None,     // Menu
         instance, // Instance handle
     )?;
 
-    window.show(SHOW_WINDOW_CMD(cmd_show as u32));
+    winwrap::win32::ui::windows_and_messaging::show_window(
+        window,
+        winwrap::win32::ui::windows_and_messaging::SHOW_WINDOW_CMD(cmd_show as u32),
+    );
 
     // Run the message loop.
-    let mut message = MSG::default();
-    while message.get(None, 0, 0)? {
-        message.translate();
-        message.dispatch();
+    let mut message = winwrap::win32::ui::windows_and_messaging::MSG::default();
+    while winwrap::win32::ui::windows_and_messaging::get_message(&mut message, None, 0, 0)? {
+        winwrap::win32::ui::windows_and_messaging::translate_message(&message);
+        winwrap::win32::ui::windows_and_messaging::dispatch_message(&message);
     }
 
-    Result::Ok(())
+    winwrap::Result::Ok(())
 }
 
 extern "system" fn window_procedure(
-    window: HWND,
+    window: winwrap::HWND,
     msg: u32,
-    w_param: WPARAM,
-    l_param: LPARAM,
-) -> LRESULT {
+    w_param: winwrap::WPARAM,
+    l_param: winwrap::LPARAM,
+) -> winwrap::LRESULT {
     match msg {
-        WM_CLOSE => {
-            if message_box(window, w!("Quit?"), w!("Malta"), MB_OKCANCEL).unwrap_or_else(popup)
-                == IDOK
+        winwrap::win32::ui::windows_and_messaging::WM_CLOSE => {
+            if winwrap::win32::ui::windows_and_messaging::message_box(
+                window,
+                winwrap::w!("Quit?"),
+                winwrap::w!("Malta"),
+                winwrap::win32::ui::windows_and_messaging::MB_OKCANCEL,
+            )
+            .unwrap_or_else(winwrap::popup)
+                == winwrap::win32::ui::windows_and_messaging::IDOK
             {
-                window.destroy().unwrap_or_else(popup);
+                winwrap::win32::ui::windows_and_messaging::destroy_window(window)
+                    .unwrap_or_else(winwrap::popup);
             }
-            LRESULT(0)
+            winwrap::LRESULT(0)
         }
-        WM_COMMAND => {
+        winwrap::win32::ui::windows_and_messaging::WM_COMMAND => {
             match w_param {
-                WPARAM(FILE_MENU_EXIT) => window.destroy().unwrap_or_else(popup),
-                WPARAM(FILE_MENU_NEW) => message_beep(MB_ICONINFORMATION).unwrap_or_else(popup),
-                WPARAM(CHANGE_TITLE) => {
-                    let mut buffer = [0u16; 128];
-                    edit.lock()
-                        .expect("Can't Acquire Lock..!")
-                        .get_text(&mut buffer)
-                        .unwrap_or_else(popup);
-                    window
-                        .set_text(PCWSTR(buffer.as_ptr()))
-                        .unwrap_or_else(popup);
+                winwrap::WPARAM(FILE_MENU_EXIT) => {
+                    winwrap::win32::ui::windows_and_messaging::destroy_window(window)
+                        .unwrap_or_else(winwrap::popup)
                 }
-                WPARAM(HELP_MENU) => message_beep(MB_OK).unwrap_or_else(popup),
+                winwrap::WPARAM(FILE_MENU_NEW) => {
+                    winwrap::win32::system::diagnostics::debug::message_beep(
+                        winwrap::win32::ui::windows_and_messaging::MB_ICONINFORMATION,
+                    )
+                    .unwrap_or_else(winwrap::popup)
+                }
+                winwrap::WPARAM(CHANGE_TITLE) => {
+                    let mut buffer = [0u16; 128];
+                    winwrap::win32::ui::windows_and_messaging::get_window_text(
+                        *edit.lock().expect("Can't Acquire Lock..!"),
+                        &mut buffer,
+                    )
+                    .unwrap_or_else(winwrap::popup);
+                    winwrap::win32::ui::windows_and_messaging::set_window_text(
+                        window,
+                        winwrap::PCWSTR(buffer.as_ptr()),
+                    )
+                    .unwrap_or_else(winwrap::popup);
+                }
+                winwrap::WPARAM(HELP_MENU) => {
+                    winwrap::win32::system::diagnostics::debug::message_beep(
+                        winwrap::win32::ui::windows_and_messaging::MB_OK,
+                    )
+                    .unwrap_or_else(winwrap::popup)
+                }
 
                 _ => (),
             }
 
-            LRESULT(0)
+            winwrap::LRESULT(0)
         }
-        WM_CREATE => {
-            add_controls(window).unwrap_or_else(popup);
-            add_menus(window).unwrap_or_else(popup);
+        winwrap::win32::ui::windows_and_messaging::WM_CREATE => {
+            add_controls(window).unwrap_or_else(winwrap::popup);
+            add_menus(window).unwrap_or_else(winwrap::popup);
 
-            let mut rect = RECT::default();
-            window.get_client_rect(&mut rect).unwrap_or_else(popup);
+            let mut rect = winwrap::RECT::default();
+            winwrap::win32::ui::windows_and_messaging::get_client_rect(window, &mut rect)
+                .unwrap_or_else(winwrap::popup);
             state.lock().expect("Can't Acquire Lock..!").width = rect.right;
             state.lock().expect("Can't Acquire Lock..!").height = rect.bottom;
 
-            LRESULT(0)
+            winwrap::LRESULT(0)
         }
-        WM_DESTROY => {
-            post_quit_message(0);
-            LRESULT(0)
+        winwrap::win32::ui::windows_and_messaging::WM_DESTROY => {
+            winwrap::win32::ui::windows_and_messaging::post_quit_message(0);
+            winwrap::LRESULT(0)
         }
-        WM_PAINT => {
-            let mut paint_struct = PAINTSTRUCT::default();
-            let device_context = begin_paint(window, &mut paint_struct);
+        winwrap::win32::ui::windows_and_messaging::WM_PAINT => {
+            let mut paint_struct = winwrap::win32::graphics::gdi::PAINTSTRUCT::default();
+            let device_context =
+                winwrap::win32::graphics::gdi::begin_paint(window, &mut paint_struct);
 
             // All painting occurs here, between BeginPaint and EndPaint.
 
-            fill_rect(
+            winwrap::win32::graphics::gdi::fill_rect(
                 device_context,
                 &paint_struct.rcPaint,
-                HBRUSH((COLOR_WINDOW.0 + 1).try_into().unwrap()),
+                winwrap::win32::graphics::gdi::HBRUSH(
+                    (winwrap::win32::graphics::gdi::COLOR_WINDOW.0 + 1)
+                        .try_into()
+                        .unwrap(),
+                ),
             );
 
-            end_paint(window, &paint_struct);
+            winwrap::win32::graphics::gdi::end_paint(window, &paint_struct);
 
-            LRESULT(0)
+            winwrap::LRESULT(0)
         }
-        WM_SIZE => {
+        winwrap::win32::ui::windows_and_messaging::WM_SIZE => {
             state.lock().expect("Can't Acquire Lock..!").width = loword!(l_param.0) as i32;
             state.lock().expect("Can't Acquire Lock..!").height = hiword!(l_param.0) as i32;
-            field
-                .lock()
-                .expect("Can't Acquire Lock..!")
-                .set_pos(
-                    None,
-                    RECT {
-                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                        top: 100,
-                        right: 100,
-                        bottom: 50,
-                    },
-                    SET_WINDOW_POS_FLAGS::ShowWindow,
-                )
-                .unwrap_or_else(popup);
-            edit.lock()
-                .expect("Can't Acquire Lock..!")
-                .set_pos(
-                    None,
-                    RECT {
-                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                        top: 152,
-                        right: 100,
-                        bottom: 50,
-                    },
-                    SET_WINDOW_POS_FLAGS::ShowWindow,
-                )
-                .unwrap_or_else(popup);
-            button
-                .lock()
-                .expect("Can't Acquire Lock..!")
-                .set_pos(
-                    None,
-                    RECT {
-                        left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-                        top: 204,
-                        right: 100,
-                        bottom: 50,
-                    },
-                    SET_WINDOW_POS_FLAGS::ShowWindow,
-                )
-                .unwrap_or_else(popup);
-            LRESULT(0)
+            winwrap::win32::ui::windows_and_messaging::set_window_pos(
+                *field.lock().expect("Can't Acquire Lock..!"),
+                None,
+                winwrap::RECT {
+                    left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                    top: 100,
+                    right: 100,
+                    bottom: 50,
+                },
+                winwrap::win32::ui::windows_and_messaging::SWP_SHOWWINDOW,
+            )
+            .unwrap_or_else(winwrap::popup);
+            winwrap::win32::ui::windows_and_messaging::set_window_pos(
+                *edit.lock().expect("Can't Acquire Lock..!"),
+                None,
+                winwrap::RECT {
+                    left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                    top: 152,
+                    right: 100,
+                    bottom: 50,
+                },
+                winwrap::win32::ui::windows_and_messaging::SWP_SHOWWINDOW,
+            )
+            .unwrap_or_else(winwrap::popup);
+            winwrap::win32::ui::windows_and_messaging::set_window_pos(
+                *button.lock().expect("Can't Acquire Lock..!"),
+                None,
+                winwrap::RECT {
+                    left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                    top: 204,
+                    right: 100,
+                    bottom: 50,
+                },
+                winwrap::win32::ui::windows_and_messaging::SWP_SHOWWINDOW,
+            )
+            .unwrap_or_else(winwrap::popup);
+            winwrap::LRESULT(0)
         }
-        _ => default_window_procedure(window, msg, w_param, l_param),
+        _ => winwrap::win32::ui::windows_and_messaging::default_window_procedure(
+            window, msg, w_param, l_param,
+        ),
     }
 }
 
-fn add_menus(window: HWND) -> Result<()> {
-    *menu.lock().expect("Can't Acquire Lock..!") = HMENU::create()?;
-    let file_menu = HMENU::create()?;
-    let sub_menu = HMENU::create()?;
+fn add_menus(window: winwrap::HWND) -> winwrap::Result<()> {
+    *menu.lock().expect("Can't Acquire Lock..!") =
+        winwrap::win32::ui::windows_and_messaging::create_menu()?;
+    let file_menu = winwrap::win32::ui::windows_and_messaging::create_menu()?;
+    let sub_menu = winwrap::win32::ui::windows_and_messaging::create_menu()?;
 
-    sub_menu.append(HMENU::String, 0, w!("SubMenu Item"))?;
-
-    file_menu.append(HMENU::String, FILE_MENU_NEW, w!("New"))?;
-    file_menu.append(HMENU::Popup, sub_menu.0 as usize, w!("Open SubMenu"))?;
-    file_menu.append(HMENU::Separator, 0, None)?;
-    file_menu.append(HMENU::String, FILE_MENU_EXIT, w!("Exit"))?;
-
-    menu.lock().expect("Can't Acquire Lock..!").append(
-        HMENU::Popup,
-        file_menu.0 as usize,
-        w!("File"),
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        sub_menu,
+        winwrap::win32::ui::windows_and_messaging::MF_STRING,
+        0,
+        winwrap::w!("SubMenu Item"),
     )?;
-    menu.lock()
-        .expect("Can't Acquire Lock..!")
-        .append(HMENU::String, HELP_MENU, w!("Help"))?;
 
-    window.set_menu(*menu.lock().expect("Can't Acquire Lock..!"))?;
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        file_menu,
+        winwrap::win32::ui::windows_and_messaging::MF_STRING,
+        FILE_MENU_NEW,
+        winwrap::w!("New"),
+    )?;
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        file_menu,
+        winwrap::win32::ui::windows_and_messaging::MF_POPUP,
+        sub_menu.0 as usize,
+        winwrap::w!("Open SubMenu"),
+    )?;
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        file_menu,
+        winwrap::win32::ui::windows_and_messaging::MF_SEPARATOR,
+        0,
+        None,
+    )?;
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        file_menu,
+        winwrap::win32::ui::windows_and_messaging::MF_STRING,
+        FILE_MENU_EXIT,
+        winwrap::w!("Exit"),
+    )?;
+
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        *menu.lock().expect("Can't Acquire Lock..!"),
+        winwrap::win32::ui::windows_and_messaging::MF_POPUP,
+        file_menu.0 as usize,
+        winwrap::w!("File"),
+    )?;
+
+    winwrap::win32::ui::windows_and_messaging::append_menu(
+        *menu.lock().expect("Can't Acquire Lock..!"),
+        winwrap::win32::ui::windows_and_messaging::MF_STRING,
+        HELP_MENU,
+        winwrap::w!("Help"),
+    )?;
+
+    winwrap::win32::ui::windows_and_messaging::set_menu(
+        window,
+        *menu.lock().expect("Can't Acquire Lock..!"),
+    )?;
 
     Ok(())
 }
 
-fn add_controls(window: HWND) -> Result<()> {
-    *field.lock().expect("Can't Acquire Lock..!") = window.create_static(
-        WINDOW_EX_STYLE(0),
-        w!("Enter Text Here: "),
-        WINDOW_STYLE::Visible
-            | WINDOW_STYLE::Child
-            | WINDOW_STYLE::Border
-            | WINDOW_STYLE::EditCenter,
-        RECT {
-            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-            top: 100,
-            right: 100,
-            bottom: 50,
-        },
-        0,
-    )?;
+fn add_controls(window: winwrap::HWND) -> winwrap::Result<()> {
+    *field.lock().expect("Can't Acquire Lock..!") =
+        winwrap::win32::ui::windows_and_messaging::create_static_window(
+            winwrap::win32::ui::windows_and_messaging::WINDOW_EX_STYLE(0),
+            winwrap::w!("Enter Text Here: "),
+            winwrap::win32::ui::windows_and_messaging::WS_VISIBLE
+                | winwrap::win32::ui::windows_and_messaging::WS_CHILD
+                | winwrap::win32::ui::windows_and_messaging::WS_BORDER
+                | winwrap::win32::ui::windows_and_messaging::WINDOW_STYLE(
+                    winwrap::win32::ui::windows_and_messaging::ES_CENTER as u32,
+                ),
+            winwrap::RECT {
+                left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                top: 100,
+                right: 100,
+                bottom: 50,
+            },
+            window,
+            0,
+        )?;
 
-    *edit.lock().expect("Can't Acquire Lock..!") = window.create_edit(
-        WINDOW_EX_STYLE(0),
-        w!("..."),
-        WINDOW_STYLE::Visible
-            | WINDOW_STYLE::Child
-            | WINDOW_STYLE::Border
-            | WINDOW_STYLE::EditMultiline
-            | WINDOW_STYLE::EditAutoVerticalScroll
-            | WINDOW_STYLE::EditAutoHorizontalScroll,
-        RECT {
-            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-            top: 152,
-            right: 100,
-            bottom: 50,
-        },
-        0,
-    )?;
+    *edit.lock().expect("Can't Acquire Lock..!") =
+        winwrap::win32::ui::windows_and_messaging::create_edit_window(
+            winwrap::win32::ui::windows_and_messaging::WINDOW_EX_STYLE(0),
+            winwrap::w!("..."),
+            winwrap::win32::ui::windows_and_messaging::WS_VISIBLE
+                | winwrap::win32::ui::windows_and_messaging::WS_CHILD
+                | winwrap::win32::ui::windows_and_messaging::WS_BORDER
+                | winwrap::win32::ui::windows_and_messaging::WINDOW_STYLE(
+                    winwrap::win32::ui::windows_and_messaging::ES_MULTILINE as u32,
+                )
+                | winwrap::win32::ui::windows_and_messaging::WINDOW_STYLE(
+                    winwrap::win32::ui::windows_and_messaging::ES_AUTOVSCROLL as u32,
+                )
+                | winwrap::win32::ui::windows_and_messaging::WINDOW_STYLE(
+                    winwrap::win32::ui::windows_and_messaging::ES_AUTOHSCROLL as u32,
+                ),
+            winwrap::RECT {
+                left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                top: 152,
+                right: 100,
+                bottom: 50,
+            },
+            window,
+            0,
+        )?;
 
-    *button.lock().expect("Can't Acquire Lock..!") = window.create_button(
-        WINDOW_EX_STYLE(0),
-        w!("Change Title"),
-        WINDOW_STYLE::Visible | WINDOW_STYLE::Child,
-        RECT {
-            left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
-            top: 204,
-            right: 100,
-            bottom: 50,
-        },
-        CHANGE_TITLE as isize,
-    )?;
+    *button.lock().expect("Can't Acquire Lock..!") =
+        winwrap::win32::ui::windows_and_messaging::create_button_window(
+            winwrap::win32::ui::windows_and_messaging::WINDOW_EX_STYLE(0),
+            winwrap::w!("Change Title"),
+            winwrap::win32::ui::windows_and_messaging::WS_VISIBLE
+                | winwrap::win32::ui::windows_and_messaging::WS_CHILD,
+            winwrap::RECT {
+                left: state.lock().expect("Can't Acquire Lock..!").width / 2 - 50,
+                top: 204,
+                right: 100,
+                bottom: 50,
+            },
+            window,
+            CHANGE_TITLE as isize,
+        )?;
 
     Ok(())
 }

@@ -1,9 +1,5 @@
-use super::*;
-use windows::Win32::Graphics::Gdi::{BeginPaint, EndPaint, FillRect};
-pub use windows::Win32::Graphics::Gdi::{HBRUSH, HDC, PAINTSTRUCT};
-
-mod colors;
-pub use colors::*;
+pub use super::*;
+pub use windows::Win32::Graphics::Gdi::*;
 
 #[inline]
 pub fn begin_paint<P0: IntoParam<HWND>>(window: P0, paint_struct: &mut PAINTSTRUCT) -> HDC {
