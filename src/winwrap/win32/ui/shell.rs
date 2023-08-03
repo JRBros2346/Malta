@@ -5,7 +5,7 @@ pub fn command_line_to_argv<P0: IntoParam<PCWSTR>>(cmd_line: P0) -> Result<Vec<S
     let mut num: i32 = 0;
     let first: *mut PWSTR = unsafe { CommandLineToArgvW(cmd_line, &mut num) };
     if num < 0 || first.is_null() {
-        return Err(last_error());
+        return Err(last_error()?);
     }
     let last: *mut PWSTR = unsafe { first.offset(num.try_into().unwrap()) };
 

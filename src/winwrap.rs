@@ -1,12 +1,16 @@
 pub mod core;
 pub mod win32;
+pub use ::core::ffi::c_void as void;
 pub use {self::core::*, win32::foundation::*};
 
 #[inline]
-pub fn last_error() -> Error {
+pub fn last_error() -> Result<Error> {
     let error = get_last_error();
+    if error == NO_ERROR {
+        return Err(NO_ERROR.into());
+    }
     set_last_error(NO_ERROR, 0);
-    error.into()
+    Ok(error.into())
 }
 
 #[inline]

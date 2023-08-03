@@ -12,6 +12,7 @@ pub fn create_window<P0, P1, P2, P3, P4>(
     parent: P2,
     menu: P3,
     instance: P4,
+    param: Option<*const void>,
 ) -> Result<HWND>
 where
     P0: IntoParam<PCWSTR>,
@@ -33,11 +34,11 @@ where
             parent,
             menu,
             instance,
-            None,
+            param,
         )
     };
     if wnd == HWND(0) {
-        return Err(crate::winwrap::last_error());
+        return Err(last_error()?);
     }
 
     Ok(wnd)
@@ -64,6 +65,7 @@ where
         parent,
         HMENU(id),
         None,
+        None,
     )
 }
 #[inline]
@@ -87,6 +89,7 @@ where
         rect,
         parent,
         HMENU(id),
+        None,
         None,
     )
 }
@@ -112,6 +115,7 @@ where
         parent,
         HMENU(id),
         None,
+        None,
     )
 }
 #[inline]
@@ -136,6 +140,7 @@ where
         parent,
         HMENU(id),
         None,
+        None,
     )
 }
 #[inline]
@@ -158,7 +163,7 @@ pub fn destroy_window<P0: IntoParam<HWND>>(window: P0) -> Result<()> {
 pub fn get_window_text<P0: IntoParam<HWND>>(window: P0, buffer: &mut [u16]) -> Result<i32> {
     let len = unsafe { GetWindowTextW(window, buffer) };
     if len == 0 {
-        return Err(crate::winwrap::last_error());
+        return Err(last_error()?);
     }
 
     Ok(len)
@@ -210,7 +215,7 @@ where
 {
     let child = unsafe { FindWindowExW(parent, child_after, class, window) };
     if child == HWND(0) {
-        return Err(crate::winwrap::last_error());
+        return Err(last_error()?);
     }
 
     Ok(child)
@@ -228,7 +233,7 @@ pub fn get_message<P0: IntoParam<HWND>>(
     max: u32,
 ) -> Result<bool> {
     match unsafe { GetMessageW(message, window, min, max) } {
-        BOOL(-1) => Err(crate::winwrap::last_error()),
+        BOOL(-1) => Err(last_error()?),
         BOOL(0) => Ok(false),
         _ => Ok(true),
     }
@@ -263,7 +268,7 @@ where
 {
     let res = unsafe { MessageBoxW(window, text, caption, style) };
     if res == MESSAGEBOX_RESULT(0) {
-        return Err(crate::winwrap::last_error());
+        return Err(last_error()?);
     }
 
     Ok(res)
@@ -310,7 +315,7 @@ where
 pub fn register_class(window_class: &WNDCLASSEXW) -> Result<u16> {
     let atom = unsafe { RegisterClassExW(window_class) };
     if atom == 0 {
-        return Err(last_error());
+        return Err(last_error()?);
     }
 
     Ok(atom)
@@ -324,4 +329,26 @@ where
     P2: IntoParam<LPARAM>,
 {
     unsafe { SendMessageW(window, message, param_wide, param_long) }
+}
+
+#[inline]
+pub fn get_window_long_ptr<P0: IntoParam<HWND>>(
+    window: P0,
+    index: WINDOW_LONG_PTR_INDEX,
+) -> Result<isize> {
+    let long: isize = unsafe { GetWindowLongPtrW(window, index) };
+    if long == 0 {
+        return Err(last_error()?);
+    }
+
+    Ok(long)
+}
+
+#[inline]
+pub fn set_window_long_ptr<P0: IntoParam<HWND>>(
+    window: P0,
+    index: WINDOW_LONG_PTR_INDEX,
+    new_long: isize,
+) -> isize {
+    unsafe { SetWindowLongPtrW(window, index, new_long) }
 }
