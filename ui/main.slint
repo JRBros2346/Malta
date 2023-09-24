@@ -1,4 +1,62 @@
+import { ComboBox, LineEdit, StandardButton, SpinBox } from "std-widgets.slint";
+
 export component App inherits Window {
     title: "Malta";
     icon: @image-url("icon.jpg");
+    min-width: 1024px;
+    min-height: 512px;
+    in property<[string]> clients;
+    out property<string> client;
+    
+    out property<int> day;
+    out property<int> month;
+    out property<int> year;
+
+    in property<[{name: string, salary: int}]> workers;
+    in property<[{tool: string}]> tools;
+    in property<[{name: string, cost: int}]> extra;
+    HorizontalLayout {
+        alignment: space-around;
+        VerticalLayout {
+            width: parent.width / 5;
+            alignment: space-around;
+            ComboBox {
+                width: parent.width / 2;
+                model <=> root.clients;
+                current-value <=> root.client;
+            }
+            HorizontalLayout {
+                LineEdit {
+                    width: parent.width / 2 - self.height;
+                }
+                StandardButton {
+                    width: self.height;
+                    kind: apply;
+                }
+            }
+            HorizontalLayout {
+                SpinBox {
+                    width: parent.width / 8;
+                    minimum: 1;
+                    maximum: 31;
+                    value <=> root.day;
+                }
+                SpinBox {
+                    width: parent.width / 8;
+                    minimum: 1;
+                    maximum: 12;
+                    value <=> root.month;
+                }
+                SpinBox {
+                    width: parent.width / 4;
+                    minimum: 1900;
+                    maximum: 2100;
+                    value <=> root.year;
+                }
+            }
+        }
+        VerticalLayout {
+            width: 3 * parent.width / 5;
+        }
+    }
 }
