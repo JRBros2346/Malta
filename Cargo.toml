@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-slint = "1.1.1"
-sqlite3 = "0.24.0"
+iced_aw = "0.9.3"
+rusqlite = { version = "0.31.0", features = ["bundled"] }
 
-[build-dependencies]
-slint-build = "1.1.1"
+[dependencies.iced]
+version = "0.12.1"
+features = ["advanced", "image"]

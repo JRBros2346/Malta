@@ -1,6 +1,8 @@
-slint::include_modules!();
-fn main() {
-    let app = App::new().unwrap();
+use iced::Application;
 
-    app.run().unwrap();
+mod app;
+mod db;
+
+fn main() -> iced::Result {
+    app::App::run(iced::Settings::with_flags(()))
 }
