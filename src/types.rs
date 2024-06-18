@@ -1,3 +1,5 @@
+use gluesql::core::ast_builder::NumericNode;
+
 #[derive(Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(transparent)]
 pub struct Money(u64);
@@ -92,5 +94,10 @@ impl std::ops::DivAssign<u64> for Money {
 impl std::ops::RemAssign<u64> for Money {
     fn rem_assign(&mut self, rhs: u64) {
         self.0 %= rhs;
+    }
+}
+impl From<Money> for gluesql::core::ast_builder::NumericNode<'_> {
+    fn from(value: Money) -> Self {
+        Self::U64(value.0)
     }
 }
