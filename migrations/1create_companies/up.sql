@@ -1,1 +1,0 @@
-CREATE TABLE companies (company TEXT NOT NULL PRIMARY KEY);
