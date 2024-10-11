@@ -1,17 +1,21 @@
-use db::Database;
 use view::*;
 use xilem::*;
-
-mod db;
+use malta::Malta;
 
 struct State {
-    db: Database,
+    db: Malta,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    std::env::set_var("RUST_BACKTRACE", "1");
     let state = State {
-        db: Database::open()?,
+        db: Malta::open().await?,
     };
+    assert!(matches!(
+        state.db.add_project("p1".to_string(), None).await,
+        Ok(_)
+    ));
     let app = Xilem::new(state, app_logic);
     app.run_windowed(EventLoop::with_user_event(), "Malta".to_string())?;
     Ok(())
