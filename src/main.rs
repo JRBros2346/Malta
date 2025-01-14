@@ -1,6 +1,6 @@
+use malta_core::Malta;
 use view::*;
 use xilem::*;
-use malta::Malta;
 
 struct State {
     db: Malta,
@@ -21,6 +21,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     Ok(())
 }
 
-fn app_logic(state: &mut State) -> impl WidgetView<State> {
+fn app_logic(_state: &mut State) -> impl WidgetView<State> {
     flex((prose("Hello"), label("world"))).direction(Axis::Vertical)
 }
