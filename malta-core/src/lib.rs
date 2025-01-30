@@ -174,7 +174,7 @@ mod tests {
         let work_type = WorkType::Full;
         let salary_record = db
             .change_salary(
-                employee_record.id,
+                employee_record.id.clone(),
                 change_date.into(),
                 new_salary,
                 work_type,
@@ -183,7 +183,7 @@ mod tests {
 
         // Ensure the salary tracking record was added successfully
         assert!(salary_record.is_some());
-
+        assert_eq!(db.get_salary_today(employee_record.id.clone(), work_type).await, Some(new_salary));
         Ok(())
     }
 
