@@ -1,0 +1,1 @@
+SELECT id[1] as on_date, reason, amount FROM expense WHERE id[0] IS NONE;

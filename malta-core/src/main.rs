@@ -75,8 +75,32 @@ async fn main() {
 async fn main_page(State(db): State<Malta>) -> impl IntoResponse {
     Html(format!(
         include_str!("../templates/main.html"),
-        income = 0,
-        expense = 0
+        income = db.get_income().await.unwrap_or(dec!(0)),
+        expense = db.get_expense().await.unwrap_or(dec!(0)),
+        incomes = db
+            .get_general_incomes()
+            .await
+            .unwrap_or(vec![])
+            .into_iter()
+            .fold(String::new(), |mut a, e| {
+                a.push_str(&format!(
+                    "<li>{} - {} - {}</li>",
+                    e.on_date, e.source, e.amount
+                ));
+                a
+            }),
+        expenses = db
+            .get_general_expenses()
+            .await
+            .unwrap_or(vec![])
+            .into_iter()
+            .fold(String::new(), |mut a, e| {
+                a.push_str(&format!(
+                    "<li>{} - {} - {}</li>",
+                    e.on_date, e.reason, e.amount
+                ));
+                a
+            }),
     ))
 }
 

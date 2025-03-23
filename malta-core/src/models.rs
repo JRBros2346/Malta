@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use surrealdb::RecordId;
@@ -23,6 +24,20 @@ pub struct Project {
     pub estimate: Option<Decimal>,
     pub incomes: Option<Decimal>,
     pub expenses: Option<Decimal>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralIncome {
+    pub source: String,
+    pub on_date: DateTime<Utc>,
+    pub amount: Decimal,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GeneralExpense {
+    pub reason: String,
+    pub on_date: DateTime<Utc>,
+    pub amount: Decimal,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

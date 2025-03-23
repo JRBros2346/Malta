@@ -1,0 +1,1 @@
+SELECT id[0] as source, id[1] as on_date, amount FROM income WHERE type::is::string(id[0]);

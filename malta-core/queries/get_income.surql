@@ -1,0 +1,1 @@
+math::sum(SELECT VALUE amount FROM income WHERE type::is::string(id[0]))

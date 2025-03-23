@@ -1,1 +1,1 @@
-CREATE income:[$source, $on_date] SET amount = $amount
+CREATE income:[$source, time::group($on_date, 'day')] SET amount = $amount

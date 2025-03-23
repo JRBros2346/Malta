@@ -3,9 +3,13 @@ pub mod models;
 use std::path::PathBuf;
 
 use chrono::{DateTime, Utc};
-pub use models::{CreateEmployee, CreateProject, CreateTool, Employee, FakeID, Project, Tool};
+pub use models::{
+    CreateEmployee, CreateProject, CreateTool, Employee, FakeID, GeneralExpense, GeneralIncome,
+    Project, Tool,
+};
 use once_cell::sync::Lazy;
 use rust_decimal::Decimal;
+use rust_decimal_macros::dec;
 use surrealdb::{engine::local::Db, Datetime, RecordIdKey, Result, Surreal};
 
 static DB_PATH: Lazy<PathBuf> = Lazy::new(|| {
@@ -20,8 +24,8 @@ static DB_PATH: Lazy<PathBuf> = Lazy::new(|| {
 pub struct Malta(Surreal<Db>);
 impl Malta {
     pub async fn open() -> Result<Self> {
-        use surrealdb::engine::local::SurrealKv;
-        let db = Self(Surreal::new::<SurrealKv>(DB_PATH.as_path()).await?);
+        use surrealdb::engine::local::RocksDb;
+        let db = Self(Surreal::new::<RocksDb>(DB_PATH.as_path()).await?);
         db.0.use_ns("malta").use_db("malta").await?;
         db.setup().await?;
         Ok(db)
@@ -40,42 +44,50 @@ impl Malta {
             .await?;
         Ok(())
     }
-    pub async fn add_project(&self, create_info: CreateProject) -> bool {
-        matches!(
-            self.0
-                .create::<Option<FakeID>>("project")
-                .content(create_info)
-                .await,
-            Ok(Some(_))
-        )
+    pub async fn add_project(&self, create_info: CreateProject) -> std::result::Result<(), String> {
+        self.0
+            .create::<Option<FakeID>>("project")
+            .content(create_info)
+            .await
+            .map_err(|e| format!("{e}"))?;
+        Ok(())
     }
     pub async fn add_project_income(
         &self,
         project: RecordIdKey,
         on_date: Option<DateTime<Utc>>,
         amount: Decimal,
-    ) -> bool {
+    ) -> std::result::Result<(), String> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("source", project))
-            .bind(("on_date", on_date.map(Datetime::from)))
+            .bind((
+                "on_date",
+                on_date.map(Datetime::from).unwrap_or(Utc::now().into()),
+            ))
             .bind(("amount", amount))
             .await
-            .is_ok()
+            .map_err(|e| format!("{e}"))?
+            .take::<Option<FakeID>>(0)
+            .map_err(|e| format!("{e}"))
+            .map(|_| ())
     }
     pub async fn add_general_income(
         &self,
         source: String,
         on_date: Option<DateTime<Utc>>,
         amount: Decimal,
-    ) -> bool {
+    ) -> std::result::Result<(), String> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("source", source))
             .bind(("on_date", on_date.map(Datetime::from)))
             .bind(("amount", amount))
             .await
-            .is_ok()
+            .map_err(|e| format!("{e}"))?
+            .take::<Option<FakeID>>(0)
+            .map_err(|e| format!("{e}"))
+            .map(|_| ())
     }
     pub async fn add_project_expense(
         &self,
@@ -83,7 +95,7 @@ impl Malta {
         on_date: Option<DateTime<Utc>>,
         reason: String,
         amount: Decimal,
-    ) -> bool {
+    ) -> std::result::Result<(), String> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("project", project))
@@ -91,40 +103,75 @@ impl Malta {
             .bind(("reason", reason))
             .bind(("amount", amount))
             .await
-            .is_ok()
+            .map_err(|e| format!("{e}"))?
+            .take::<Option<FakeID>>(0)
+            .map_err(|e| format!("{e}"))
+            .map(|_| ())
     }
     pub async fn add_general_expense(
         &self,
         on_date: Option<DateTime<Utc>>,
         reason: String,
         amount: Decimal,
-    ) -> bool {
+    ) -> std::result::Result<(), String> {
         self.0
-            .query(include_str!("../queries/create_income.surql"))
+            .query(include_str!("../queries/create_expense.surql"))
             .bind(("project", None::<RecordIdKey>))
             .bind(("on_date", on_date.map(Datetime::from)))
             .bind(("reason", reason))
             .bind(("amount", amount))
             .await
-            .is_ok()
+            .map_err(|e| format!("{e}"))?
+            .take::<Option<FakeID>>(0)
+            .map_err(|e| format!("{e}"))
+            .map(|_| ())
     }
-    pub async fn add_employee(&self, create_info: CreateEmployee) -> bool {
-        matches!(
-            self.0
-                .create::<Option<FakeID>>("employee")
-                .content(create_info)
-                .await,
-            Ok(Some(_))
-        )
+    pub async fn get_income(&self) -> Result<Decimal> {
+        Ok(self
+            .0
+            .query(include_str!("../queries/get_income.surql"))
+            .await?
+            .take::<Option<Decimal>>(0)?
+            .unwrap_or(dec!(0)))
     }
-    pub async fn add_tool(&self, create_info: CreateTool) -> bool {
-        matches!(
-            self.0
-                .create::<Option<FakeID>>("tool")
-                .content(create_info)
-                .await,
-            Ok(Some(_))
-        )
+    pub async fn get_expense(&self) -> Result<Decimal> {
+        Ok(self
+            .0
+            .query(include_str!("../queries/get_expense.surql"))
+            .await?
+            .take::<Option<Decimal>>(0)?
+            .unwrap_or(dec!(0)))
+    }
+    pub async fn get_general_incomes(&self) -> Result<Vec<GeneralIncome>> {
+        self.0
+            .query(include_str!("../queries/get_general_incomes.surql"))
+            .await?
+            .take(0)
+    }
+    pub async fn get_general_expenses(&self) -> Result<Vec<GeneralExpense>> {
+        self.0
+            .query(include_str!("../queries/get_general_expenses.surql"))
+            .await?
+            .take(0)
+    }
+    pub async fn add_employee(
+        &self,
+        create_info: CreateEmployee,
+    ) -> std::result::Result<(), String> {
+        self.0
+            .create::<Option<FakeID>>("employee")
+            .content(create_info)
+            .await
+            .map_err(|e| format!("{e}"))?;
+        Ok(())
+    }
+    pub async fn add_tool(&self, create_info: CreateTool) -> std::result::Result<(), String> {
+        self.0
+            .create::<Option<FakeID>>("tool")
+            .content(create_info)
+            .await
+            .map_err(|e| format!("{e}"))?;
+        Ok(())
     }
     pub async fn get_project(&self, record: RecordIdKey) -> Result<Option<Project>> {
         self.0.select(("project", record)).await
