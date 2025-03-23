@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Tools</title>
+  <link rel="stylesheet" href="/styles">
+</head>
+
+<body>
+  <h1>Tools</h1>
+  <ul id="list">
+    <!-- List of tools will be dynamically loaded here -->
+    {}
+  </ul>
+
+  <h2>New Tool</h2>
+  <!-- Form to create a new tool (POST /tool) -->
+  <form id="form">
+    <input type="text" name="name" placeholder="Tool Name" required>
+    <textarea name="adjectives" placeholder="Adjectives"></textarea>
+    <button type="submit">Add Tool</button>
+  </form>
+
+  <script src="/js/tools.js"></script>
+</body>
+
+</html>
