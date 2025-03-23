@@ -10,13 +10,37 @@
 <body>
   <h1>Welcome to the Main Page</h1>
   <nav>
-    <span id="income">{}</span>
-    <span id="expense">{}</span>
     <ul>
       <li><a href="/project">Projects</a></li>
       <li><a href="/employee">Employees</a></li>
       <li><a href="/tool">Tools</a></li>
     </ul>
+    <h1>General Income Log ({income})</h1>
+    <ul>
+      {incomes}
+    </ul>
+    <form class="form" id="income">
+      <label for="amount">Amount</label>
+      <input type="text" name="amount" placeholder="Amount" required>
+      <label for="source">Source</label>
+      <input type="text" name="source" placeholder="Source" required>
+      <label for="date">Date</label>
+      <input type="date" name="date">
+      <input type="submit" value="Add Income">
+    </form>
+    <h1>General Expense Log ({expense})</h1>
+    <ul>
+      {expenses}
+    </ul>
+    <form class="form" id="expense">
+      <label for="amount">Amount</label>
+      <input type="text" name="amount" placeholder="Amount" required>
+      <label for="reason">Reason</label>
+      <input type="text" name="reason" placeholder="Reason" required>
+      <label for="date">Date</label>
+      <input type="date" name="date">
+      <input type="submit" value="Add Income">
+    </form>
   </nav>
   <script src="/js/main.js"></script>
 </body>

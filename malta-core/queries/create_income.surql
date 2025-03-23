@@ -1,0 +1,1 @@
+CREATE income:[$source, $on_date] SET amount = $amount

@@ -3,22 +3,42 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Project Details</title>
+  <title>{name}</title>
   <link rel="stylesheet" href="/styles">
 </head>
 
 <body>
-  <h1>Project Details</h1>
-  <div id="project-details">
-    <!-- Project details will be loaded here (e.g., via AJAX) -->
-  </div>
-
-  <h2>Edit Project</h2>
-  <!-- Form to edit the project (simulate PUT /project/:id using AJAX) -->
-  <form id="edit-project-form" action="" method="POST">
-    <input type="text" name="name" placeholder="Project Name" required>
-    <textarea name="description" placeholder="Project Description"></textarea>
-    <button type="submit">Save Changes</button>
+  <h1>Income vs Expense Graph (Estimate: {estimate})</h1>
+  <ul>
+    {income_expense}
+  </ul>
+  <h1>Tool Graph</h1>
+  <ul>
+    {tool}
+  </ul>
+  <h1>Income</h1>
+  <ul>
+    {income}
+  </ul>
+  <form id="income" class="form">
+    <label for="amount">Amount</label>
+    <input type="number" name="amount" required>
+    <label for="date">Date</label>
+    <input type="date" name="date">
+    <button type="submit">Add</button>
+  </form>
+  <h1>Expense</h1>
+  <ul>
+    {expense}
+  </ul>
+  <form id="expense" class="form">
+    <label for="amount">Amount</label>
+    <input type="number" name="amount" required>
+    <label for="reason">Reason</label>
+    <input type="text" name="reason" required>
+    <label for="date">Date</label>
+    <input type="date" name="date">
+    <button type="submit">Add</button>
   </form>
 
   <script src="/js/project.js"></script>

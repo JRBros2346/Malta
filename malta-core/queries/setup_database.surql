@@ -6,7 +6,13 @@ DEFINE TABLE IF NOT EXISTS income SCHEMAFULL;
 -- DEFINE FIELD IF NOT EXISTS on_date ON income TYPE datetime
 --     VALUE time::group($value, 'day');
 -- DEFINE FIELD IF NOT EXISTS reason ON income TYPE record<project> | string;
-DEFINE FIELD IF NOT EXISTS amount ON income TYPE decimal;
+DEFINE FIELD IF NOT EXISTS source ON income TYPE decimal;
+
+DEFINE TABLE IF NOT EXISTS expense SCHEMAFULL;
+-- DEFINE FIELD IF NOT EXISTS on_date ON expense TYPE datetime;
+-- DEFINE FIELD IF NOT EXISTS project ON expense TYPE option<record<project>>;
+DEFINE FIELD IF NOT EXISTS reason ON expense TYPE string;
+DEFINE FIELD IF NOT EXISTS amount ON expense TYPE decimal;
 
 DEFINE TABLE IF NOT EXISTS employee SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS name ON employee TYPE string;
@@ -46,8 +52,3 @@ DEFINE FIELD IF NOT EXISTS from_time ON taken_by TYPE datetime;
 DEFINE FIELD IF NOT EXISTS duration ON taken_by TYPE duration;
 DEFINE FIELD IF NOT EXISTS to_project ON taken_by TYPE option<record<project>>;
 
-DEFINE TABLE IF NOT EXISTS expense SCHEMAFULL;
--- DEFINE FIELD IF NOT EXISTS on_date ON expense TYPE datetime;
--- DEFINE FIELD IF NOT EXISTS project ON expense TYPE option<record<project>>;
-DEFINE FIELD IF NOT EXISTS reason ON expense TYPE string;
-DEFINE FIELD IF NOT EXISTS amount ON expense TYPE decimal;

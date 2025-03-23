@@ -1,17 +1,18 @@
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
+    http::{header, StatusCode},
     response::{Html, IntoResponse},
     routing, Json, Router,
 };
+use chrono::{DateTime, Utc};
 use malta_core::{CreateEmployee, CreateProject, CreateTool, Malta};
+use memory_serve::{load_assets, MemoryServe};
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tower_http::{
-    services::{ServeDir, ServeFile},
-    trace::TraceLayer,
-};
+use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() {
@@ -19,9 +20,24 @@ async fn main() {
     let app = Router::new()
         .layer(TraceLayer::new_for_http())
         .route("/", routing::get(main_page))
-        .nest_service("/styles", ServeFile::new("styles.css"))
-        .nest_service("/js", ServeDir::new("js"))
-        .nest_service("/teapot", ServeDir::new("teapot"))
+        .route(
+            "/styles",
+            routing::get(async || {
+                (
+                    [(header::CONTENT_TYPE, "text/css")],
+                    include_str!("../styles.css"),
+                )
+            }),
+        )
+        .nest("/js", MemoryServe::new(load_assets!("js")).into_router())
+        .nest(
+            "/teapot",
+            MemoryServe::new(load_assets!("teapot"))
+                .index_file(Some("/index.html"))
+                .into_router(),
+        )
+        .route("/income", routing::post(add_income))
+        .route("/expense", routing::post(add_expense))
         .route("/project", routing::get(all_projects))
         .route("/project", routing::post(new_project))
         // .route("/project/ws", routing::get(projects_stream))
@@ -57,13 +73,37 @@ async fn main() {
 }
 
 async fn main_page(State(db): State<Malta>) -> impl IntoResponse {
-    Html(format!(include_str!("../templates/main.html"), 0, 0))
+    Html(format!(
+        include_str!("../templates/main.html"),
+        income = 0,
+        expense = 0
+    ))
+}
+
+async fn add_income(
+    State(db): State<Malta>,
+    Json(payload): Json<CreateGeneralIncome>,
+) -> impl IntoResponse {
+    Json(
+        db.add_general_income(payload.source, payload.on_date, payload.amount)
+            .await,
+    )
+}
+
+async fn add_expense(
+    State(db): State<Malta>,
+    Json(payload): Json<CreateGeneralExpense>,
+) -> impl IntoResponse {
+    Json(
+        db.add_general_expense(payload.on_date, payload.reason, payload.amount)
+            .await,
+    )
 }
 
 async fn all_projects(State(db): State<Malta>) -> impl IntoResponse {
     Html(format!(
         include_str!("../templates/projects.html"),
-        match db.get_all_projects().await {
+        projects = match db.get_all_projects().await {
             Ok(list) => list
                 .into_iter()
                 .map(|p| format!(
@@ -86,7 +126,7 @@ async fn all_projects(State(db): State<Malta>) -> impl IntoResponse {
 async fn all_employees(State(db): State<Malta>) -> impl IntoResponse {
     Html(format!(
         include_str!("../templates/employees.html"),
-        match db.get_all_employees().await {
+        employees = match db.get_all_employees().await {
             Ok(list) => list
                 .into_iter()
                 .map(|p| format!(
@@ -106,7 +146,7 @@ async fn all_employees(State(db): State<Malta>) -> impl IntoResponse {
 async fn all_tools(State(db): State<Malta>) -> impl IntoResponse {
     Html(format!(
         include_str!("../templates/tools.html"),
-        match db.get_all_tools().await {
+        tools = match db.get_all_tools().await {
             Ok(list) => list
                 .into_iter()
                 .map(|p| format!(
@@ -150,6 +190,20 @@ async fn delete_employee(State(db): State<Malta>, Path(id): Path<String>) -> imp
 }
 async fn delete_tool(State(db): State<Malta>, Path(id): Path<String>) -> impl IntoResponse {
     Json(db.remove_tool(id).await)
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct CreateGeneralIncome {
+    pub source: String,
+    pub on_date: Option<DateTime<Utc>>,
+    pub amount: Decimal,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct CreateGeneralExpense {
+    pub on_date: Option<DateTime<Utc>>,
+    pub reason: String,
+    pub amount: Decimal,
 }
 
 // #[axum::debug_handler]

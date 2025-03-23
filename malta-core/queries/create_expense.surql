@@ -1,0 +1,1 @@
+CREATE income:[$project, $on_date] SET reason = $reason, amount = $amount;

@@ -2,9 +2,11 @@ pub mod models;
 
 use std::path::PathBuf;
 
+use chrono::{DateTime, Utc};
 pub use models::{CreateEmployee, CreateProject, CreateTool, Employee, FakeID, Project, Tool};
 use once_cell::sync::Lazy;
-use surrealdb::{engine::local::Db, RecordIdKey, Result, Surreal};
+use rust_decimal::Decimal;
+use surrealdb::{engine::local::Db, Datetime, RecordIdKey, Result, Surreal};
 
 static DB_PATH: Lazy<PathBuf> = Lazy::new(|| {
     std::env::current_exe()
@@ -46,6 +48,65 @@ impl Malta {
                 .await,
             Ok(Some(_))
         )
+    }
+    pub async fn add_project_income(
+        &self,
+        project: RecordIdKey,
+        on_date: Option<DateTime<Utc>>,
+        amount: Decimal,
+    ) -> bool {
+        self.0
+            .query(include_str!("../queries/create_income.surql"))
+            .bind(("source", project))
+            .bind(("on_date", on_date.map(Datetime::from)))
+            .bind(("amount", amount))
+            .await
+            .is_ok()
+    }
+    pub async fn add_general_income(
+        &self,
+        source: String,
+        on_date: Option<DateTime<Utc>>,
+        amount: Decimal,
+    ) -> bool {
+        self.0
+            .query(include_str!("../queries/create_income.surql"))
+            .bind(("source", source))
+            .bind(("on_date", on_date.map(Datetime::from)))
+            .bind(("amount", amount))
+            .await
+            .is_ok()
+    }
+    pub async fn add_project_expense(
+        &self,
+        project: RecordIdKey,
+        on_date: Option<DateTime<Utc>>,
+        reason: String,
+        amount: Decimal,
+    ) -> bool {
+        self.0
+            .query(include_str!("../queries/create_income.surql"))
+            .bind(("project", project))
+            .bind(("on_date", on_date.map(Datetime::from)))
+            .bind(("reason", reason))
+            .bind(("amount", amount))
+            .await
+            .is_ok()
+    }
+    pub async fn add_general_expense(
+        &self,
+        on_date: Option<DateTime<Utc>>,
+        reason: String,
+        amount: Decimal,
+    ) -> bool {
+        self.0
+            .query(include_str!("../queries/create_income.surql"))
+            .bind(("project", None::<RecordIdKey>))
+            .bind(("on_date", on_date.map(Datetime::from)))
+            .bind(("reason", reason))
+            .bind(("amount", amount))
+            .await
+            .is_ok()
     }
     pub async fn add_employee(&self, create_info: CreateEmployee) -> bool {
         matches!(
