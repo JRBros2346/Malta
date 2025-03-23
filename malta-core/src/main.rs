@@ -11,6 +11,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
+use surrealdb::RecordIdKey;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 
@@ -40,25 +41,21 @@ async fn main() {
         .route("/expense", routing::post(add_expense))
         .route("/project", routing::get(all_projects))
         .route("/project", routing::post(new_project))
-        // .route("/project/ws", routing::get(projects_stream))
-        // .route("/project/{id}", routing::get(project_page))
+        .route("/project/{id}", routing::get(project_page))
         // .route("/project/{id}", routing::put(edit_project))
         .route("/project/{id}", routing::delete(delete_project))
-        // .route("/project/{id}/ws", routing::get(project_details))
+        .route("/project/{id}/income", routing::post(add_project_income))
+        .route("/project/{id}/expense", routing::post(add_project_expense))
         .route("/employee", routing::get(all_employees))
         .route("/employee", routing::post(new_employee))
-        // .route("/employee/ws", routing::get(employees_stream))
         // .route("/employee/{id}", routing::get(employee_page))
         // .route("/employee/{id}", routing::put(edit_employee))
         .route("/employee/{id}", routing::delete(delete_employee))
-        // .route("/employee/{id}/ws", routing::get(employee_details))
         .route("/tool", routing::get(all_tools))
         .route("/tool", routing::post(new_tool))
-        // .route("/tool/ws", routing::get(tools_stream))
         // .route("/tool/{id}", routing::get(tool_page))
         // .route("/tool/{id}", routing::put(edit_tool))
         .route("/tool/{id}", routing::delete(delete_tool))
-        // .route("/tool/{id}/ws", routing::get(tool_details))
         .fallback(async || {
             (
                 StatusCode::IM_A_TEAPOT,
@@ -216,6 +213,53 @@ async fn delete_tool(State(db): State<Malta>, Path(id): Path<String>) -> impl In
     Json(db.remove_tool(id).await)
 }
 
+async fn project_page(
+    State(db): State<Malta>,
+    Path(id): Path<String>,
+) -> Result<Html<String>, String> {
+    let project = db
+        .get_project(id.into())
+        .await
+        .map_err(|e| format!("{e}"))?
+        .ok_or("Project not found")?;
+    Ok(Html(format!(
+        include_str!("../templates/project.html"),
+        name = project.name,
+        estimate = project.estimate.unwrap_or(dec!(0)),
+        income_expense = "",
+        income = "",
+        expense = "",
+        id = project.id.key().to_string(),
+    )))
+}
+
+async fn add_project_income(
+    State(db): State<Malta>,
+    Path(id): Path<String>,
+    Json(payload): Json<CreateProjectIncome>,
+) -> impl IntoResponse {
+    Json(
+        db.add_project_income(RecordIdKey::from(id), payload.on_date, payload.amount)
+            .await,
+    )
+}
+
+async fn add_project_expense(
+    State(db): State<Malta>,
+    Path(id): Path<String>,
+    Json(payload): Json<CreateProjectExpense>,
+) -> impl IntoResponse {
+    Json(
+        db.add_project_expense(
+            RecordIdKey::from(id),
+            payload.on_date,
+            payload.reason,
+            payload.amount,
+        )
+        .await,
+    )
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 struct CreateGeneralIncome {
     pub source: String,
@@ -230,24 +274,15 @@ struct CreateGeneralExpense {
     pub amount: Decimal,
 }
 
-// #[axum::debug_handler]
-// async fn projects_stream(ws: WebSocketUpgrade, State(db): State<Malta>) -> impl IntoResponse {
-//     use std::sync::Arc;
-//     use tokio::sync::Mutex;
-//     ws.on_upgrade(async move |socket| {
-//         let socket = Arc::new(Mutex::new(socket));
-//         db.project_stream(|notif| {
-//             let socket = Arc::clone(&socket);
-//             async move {
-//                 println!("{notif:?}");
-//                 socket
-//                     .lock()
-//                     .await
-//                     .send(Message::Text("Changed".into()))
-//                     .await
-//                     .unwrap();
-//             }
-//         })
-//         .await
-//     })
-// }
+#[derive(Debug, Deserialize, Serialize)]
+struct CreateProjectIncome {
+    pub on_date: Option<DateTime<Utc>>,
+    pub amount: Decimal,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct CreateProjectExpense {
+    pub on_date: Option<DateTime<Utc>>,
+    pub reason: String,
+    pub amount: Decimal,
+}

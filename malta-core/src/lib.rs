@@ -209,20 +209,4 @@ impl Malta {
             .await
             .map(|b| b.is_some())
     }
-    // pub async fn project_stream<F, Fut>(&self, mut callback: F)
-    // where
-    //     F: FnMut(Notification<Project>) -> Fut,
-    //     Fut: Future<Output = ()>,
-    // {
-    //     use futures::StreamExt as _;
-    //     if let Ok(mut stream) = self.0.select::<Vec<Project>>("project").live().await {
-    //         while let Some(result) = stream.next().await {
-    //             if let Ok(notification) = result {
-    //                 callback(notification).await;
-    //             } else {
-    //                 break;
-    //             }
-    //         }
-    //     }
-    // }
 }

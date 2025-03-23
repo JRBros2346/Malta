@@ -1,1 +1,1 @@
-math::sum(SELECT VALUE amount FROM expense WHERE id[0] IS NONE);
+math::sum(SELECT VALUE amount FROM expense);

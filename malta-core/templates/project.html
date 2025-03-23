@@ -14,15 +14,18 @@
   </ul>
   <h1>Tool Graph</h1>
   <ul>
-    {tool}
+  </ul>
+  <h1>Employee Works</h1>
+  <ul>
   </ul>
   <h1>Income</h1>
   <ul>
     {income}
   </ul>
   <form id="income" class="form">
+    <input type="hidden" name="id" value="{id}">
     <label for="amount">Amount</label>
-    <input type="number" name="amount" required>
+    <input type="number" name="amount" step="0.01" placeholder="0.00" required>
     <label for="date">Date</label>
     <input type="date" name="date">
     <button type="submit">Add</button>
@@ -32,10 +35,11 @@
     {expense}
   </ul>
   <form id="expense" class="form">
+    <input type="hidden" name="id" value="{id}">
     <label for="amount">Amount</label>
-    <input type="number" name="amount" required>
+    <input type="number" name="amount" step="0.01" placeholder="0.00" required>
     <label for="reason">Reason</label>
-    <input type="text" name="reason" required>
+    <input type="text" name="reason" placeholder="Reason" required>
     <label for="date">Date</label>
     <input type="date" name="date">
     <button type="submit">Add</button>
