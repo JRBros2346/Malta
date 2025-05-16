@@ -1,12 +1,13 @@
 use axum::{
+    Json, Router,
     extract::{Path, State},
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::{Html, IntoResponse},
-    routing, Json, Router,
+    routing,
 };
 use chrono::{DateTime, Utc};
 use malta_core::{CreateEmployee, CreateProject, CreateTool, Malta};
-use memory_serve::{load_assets, MemoryServe};
+use memory_serve::{MemoryServe, load_assets};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
@@ -31,12 +32,6 @@ async fn main() {
             }),
         )
         .nest("/js", MemoryServe::new(load_assets!("js")).into_router())
-        .nest(
-            "/teapot",
-            MemoryServe::new(load_assets!("teapot"))
-                .index_file(Some("/index.html"))
-                .into_router(),
-        )
         .route("/income", routing::post(add_income))
         .route("/expense", routing::post(add_expense))
         .route("/project", routing::get(all_projects))
@@ -56,12 +51,7 @@ async fn main() {
         // .route("/tool/{id}", routing::get(tool_page))
         // .route("/tool/{id}", routing::put(edit_tool))
         .route("/tool/{id}", routing::delete(delete_tool))
-        .fallback(async || {
-            (
-                StatusCode::IM_A_TEAPOT,
-                Html(include_str!("../teapot/index.html")),
-            )
-        })
+        .fallback(async || StatusCode::IM_A_TEAPOT)
         .with_state(Malta::open().await.unwrap());
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = TcpListener::bind(addr).await.unwrap();
