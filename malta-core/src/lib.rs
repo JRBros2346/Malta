@@ -126,7 +126,7 @@ impl Malta {
             .map_err(|e| format!("{e}"))
             .map(|_| ())
     }
-    pub async fn get_income(&self) -> Result<Decimal> {
+    pub async fn get_total_income(&self) -> Result<Decimal> {
         Ok(self
             .0
             .query(include_str!("../queries/get_income.surql"))
@@ -134,7 +134,7 @@ impl Malta {
             .take::<Option<Decimal>>(0)?
             .unwrap_or(dec!(0)))
     }
-    pub async fn get_expense(&self) -> Result<Decimal> {
+    pub async fn get_total_expense(&self) -> Result<Decimal> {
         Ok(self
             .0
             .query(include_str!("../queries/get_expense.surql"))
@@ -154,6 +154,7 @@ impl Malta {
             .await?
             .take(0)
     }
+
     pub async fn add_employee(
         &self,
         create_info: CreateEmployee,

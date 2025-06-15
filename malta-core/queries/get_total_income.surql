@@ -1,0 +1,1 @@
+math::sum((SELECT VALUE amount FROM income));

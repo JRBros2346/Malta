@@ -1,1 +1,2 @@
-SELECT id[0] as source, id[1] as on_date, amount FROM income WHERE type::is::string(id[0]) ORDER BY id[1] DESC;
+SELECT id[1] AS source, id[0] AS on_date, amount FROM income WHERE type::is::string(id[1]) ORDER BY id[0] DESC
+;

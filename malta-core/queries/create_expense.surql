@@ -1,1 +1,4 @@
-CREATE expense:[$project, time::group($on_date, 'day')] SET reason = $reason, amount = $amount;
+CREATE expense:[
+	time::group($on_date, 'day'),
+	$project
+] SET reason = $reason, amount = $amount;

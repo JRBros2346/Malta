@@ -1,6 +1,2 @@
-SELECT VALUE new_salary FROM (
-    SELECT * FROM salary_tracking
-        WHERE employee = $employee
-            && change_date <= time::group($date, 'day')
-            && work_type = $work ORDER change_date DESC LIMIT 1
-);
+SELECT VALUE new_salary FROM (SELECT * FROM salary_log WHERE id[0] = $employee AND id[1] <= time::group($date, 'day') ORDER BY id[1] DESC
+ LIMIT 1);

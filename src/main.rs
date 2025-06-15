@@ -1,6 +1,7 @@
+mod views;
+
 use malta_core::Malta;
-// use view::*;
-// use xilem::*;
+use views::*;
 
 struct State {
     db: Malta,
@@ -11,7 +12,3 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // app.run_windowed(EventLoop::with_user_event(), "Malta".to_string())?;
     Ok(())
 }
-
-// fn app_logic(_state: &mut State) -> impl WidgetView<State> {
-//     flex((prose("Hello"), label("world"))).direction(Axis::Vertical)
-// }

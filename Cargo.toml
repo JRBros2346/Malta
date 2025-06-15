@@ -4,11 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+askama = "0.14.0"
+axum = "0.8.4"
 malta-core = { path = "malta-core" }
-# xilem = { git = "https://github.com/linebender/xilem/", version = "0.1.0" }
 
 [workspace]
-members = [
-    "malta-core",
-    "malta-web"
-]
+members = [ "malta-core" ]
