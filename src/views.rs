@@ -7,7 +7,7 @@ use axum::{
 use malta_core::{
     surrealdb::{self, RecordId, RecordIdKey},
     tracing::{self, instrument},
-    Malta,
+    DateTime, Malta, Utc,
 };
 use thiserror::Error;
 
@@ -36,13 +36,10 @@ pub async fn get_project(
         incomes: Vec<malta_core::models::GeneralIncome>,
         expenses: Vec<malta_core::models::GeneralExpense>,
     }
-    let mut id = id.split(":");
-    let tb = id.next().ok_or(AppError::NotFound)?;
-    let id = id.next().ok_or(AppError::NotFound)?;
     let view = Project {
-        project: dbg!(db.get_project(RecordId::from((tb, id))).await)?.ok_or(AppError::NotFound)?,
-        incomes: dbg!(db.get_project_incomes(RecordIdKey::from(id)).await)?,
-        expenses: dbg!(db.get_project_expenses(RecordIdKey::from(id)).await)?,
+        project: dbg!(db.get_project(id.clone()).await)?.ok_or(AppError::NotFound)?,
+        incomes: dbg!(db.get_project_incomes(RecordIdKey::from(&id)).await)?,
+        expenses: dbg!(db.get_project_expenses(RecordIdKey::from(&id)).await)?,
     };
     Ok(Html(view.render()?))
 }
@@ -56,14 +53,24 @@ pub async fn create_project(
     Ok(Json(serde_json::to_string(&x.unwrap()).unwrap()))
 }
 
-// #[instrument(name = "add_income", level = "info", skip(db))]
-// pub async fn add_income(
-//     State(db): State<Malta>,
-//     Json(create_info): Json<malta_core::models::CreateProject>,
-// ) -> Result<Json<String>, AppError> {
-//     let x = db.add_project_income(create_info).await?;
-//     Ok(Json(serde_json::to_string(&x.unwrap()).unwrap()))
-// }
+#[instrument(name = "add_income", level = "info", skip(db))]
+pub async fn add_income(
+    State(db): State<Malta>,
+    Json(CreateIncome {
+        source,
+        amount,
+        on_date,
+    }): Json<CreateIncome>,
+) -> Result<(), AppError> {
+    db.add_project_income(source, Some(on_date), amount).await?;
+    Ok(())
+}
+
+struct CreateIncome {
+    pub source: RecordIdKey,
+    pub amount: malta_core::Decimal,
+    pub on_date: DateTime<Utc>,
+}
 
 // #[instrument(name = "add_expense", level = "info", skip(db))]
 // pub async fn add_expense(

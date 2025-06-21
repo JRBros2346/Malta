@@ -2,15 +2,19 @@ pub mod models;
 
 use std::path::PathBuf;
 
-use chrono::{DateTime, Utc};
 pub use models::{
     CreateEmployee, CreateProject, CreateTool, Employee, FakeID, GeneralExpense, GeneralIncome,
     Project, Tool,
 };
 use once_cell::sync::Lazy;
-use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use surrealdb::{engine::local::Db, Datetime, RecordId, RecordIdKey, Result, Surreal};
+
+pub use chrono::{DateTime, Utc};
+pub use rust_decimal::Decimal;
+pub use serde;
+pub use surrealdb;
+pub use tracing;
 
 static DB_PATH: Lazy<PathBuf> = Lazy::new(|| {
     std::env::current_exe()
@@ -174,7 +178,7 @@ impl Malta {
             .await?;
         Ok(())
     }
-    pub async fn get_project(&self, record: RecordId) -> Result<Option<Project>> {
+    pub async fn get_project(&self, record: String) -> Result<Option<Project>> {
         self.0
             .query(include_str!("../queries/get_project.surql"))
             .bind(("record", record))
@@ -218,8 +222,3 @@ impl Malta {
             .map(|b| b.is_some())
     }
 }
-
-pub use serde;
-pub use surrealdb;
-pub use tracing;
-use tracing::instrument;
