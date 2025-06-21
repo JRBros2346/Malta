@@ -22,8 +22,8 @@ pub struct Project {
     pub id: RecordId,
     pub name: String,
     pub estimate: Option<Decimal>,
-    pub incomes: Option<Decimal>,
-    pub expenses: Option<Decimal>,
+    pub income: Decimal,
+    pub expense: Decimal,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

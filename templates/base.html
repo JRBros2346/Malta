@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>{% block title %}Dashboard{% endblock %}</title>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="/ledger">Income/Expense</a></li>
+            <li><a href="/projects">Projects</a></li>
+            <li><a href="/employees">Employees</a></li>
+            <li><a href="/tools">Tools</a></li>
+        </ul>
+    </nav>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+
+</html>

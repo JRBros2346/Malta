@@ -4,7 +4,7 @@ DEFINE FIELD IF NOT EXISTS estimate ON project TYPE option<decimal>;
 
 DEFINE TABLE IF NOT EXISTS income SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS id ON income TYPE [datetime, record<project> | string];
-DEFINE FIELD IF NOT EXISTS source ON income TYPE decimal;
+DEFINE FIELD IF NOT EXISTS amount ON income TYPE decimal;
 
 DEFINE TABLE IF NOT EXISTS expense SCHEMAFULL;
 DEFINE FIELD IF NOT EXISTS id ON expense TYPE [datetime, option<record<project>>];

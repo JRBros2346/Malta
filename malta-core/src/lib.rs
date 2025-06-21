@@ -44,20 +44,18 @@ impl Malta {
             .await?;
         Ok(())
     }
-    pub async fn add_project(&self, create_info: CreateProject) -> std::result::Result<(), String> {
+    pub async fn add_project(&self, create_info: CreateProject) -> Result<Option<FakeID>> {
         self.0
             .create::<Option<FakeID>>("project")
             .content(create_info)
             .await
-            .map_err(|e| format!("{e}"))?;
-        Ok(())
     }
     pub async fn add_project_income(
         &self,
         project: RecordIdKey,
         on_date: Option<DateTime<Utc>>,
         amount: Decimal,
-    ) -> std::result::Result<(), String> {
+    ) -> Result<()> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("source", project))
@@ -66,10 +64,8 @@ impl Malta {
                 on_date.map(Datetime::from).unwrap_or(Utc::now().into()),
             ))
             .bind(("amount", amount))
-            .await
-            .map_err(|e| format!("{e}"))?
+            .await?
             .take::<Option<FakeID>>(0)
-            .map_err(|e| format!("{e}"))
             .map(|_| ())
     }
     pub async fn add_general_income(
@@ -77,16 +73,14 @@ impl Malta {
         source: String,
         on_date: Option<DateTime<Utc>>,
         amount: Decimal,
-    ) -> std::result::Result<(), String> {
+    ) -> Result<()> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("source", source))
             .bind(("on_date", on_date.map(Datetime::from)))
             .bind(("amount", amount))
-            .await
-            .map_err(|e| format!("{e}"))?
+            .await?
             .take::<Option<FakeID>>(0)
-            .map_err(|e| format!("{e}"))
             .map(|_| ())
     }
     pub async fn add_project_expense(
@@ -95,17 +89,15 @@ impl Malta {
         on_date: Option<DateTime<Utc>>,
         reason: String,
         amount: Decimal,
-    ) -> std::result::Result<(), String> {
+    ) -> Result<()> {
         self.0
             .query(include_str!("../queries/create_income.surql"))
             .bind(("project", project))
             .bind(("on_date", on_date.map(Datetime::from)))
             .bind(("reason", reason))
             .bind(("amount", amount))
-            .await
-            .map_err(|e| format!("{e}"))?
+            .await?
             .take::<Option<FakeID>>(0)
-            .map_err(|e| format!("{e}"))
             .map(|_| ())
     }
     pub async fn add_general_expense(
@@ -113,23 +105,21 @@ impl Malta {
         on_date: Option<DateTime<Utc>>,
         reason: String,
         amount: Decimal,
-    ) -> std::result::Result<(), String> {
+    ) -> Result<()> {
         self.0
             .query(include_str!("../queries/create_expense.surql"))
             .bind(("project", None::<RecordIdKey>))
             .bind(("on_date", on_date.map(Datetime::from)))
             .bind(("reason", reason))
             .bind(("amount", amount))
-            .await
-            .map_err(|e| format!("{e}"))?
+            .await?
             .take::<Option<FakeID>>(0)
-            .map_err(|e| format!("{e}"))
             .map(|_| ())
     }
     pub async fn get_total_income(&self) -> Result<Decimal> {
         Ok(self
             .0
-            .query(include_str!("../queries/get_income.surql"))
+            .query(include_str!("../queries/get_total_income.surql"))
             .await?
             .take::<Option<Decimal>>(0)?
             .unwrap_or(dec!(0)))
@@ -137,7 +127,7 @@ impl Malta {
     pub async fn get_total_expense(&self) -> Result<Decimal> {
         Ok(self
             .0
-            .query(include_str!("../queries/get_expense.surql"))
+            .query(include_str!("../queries/get_total_expense.surql"))
             .await?
             .take::<Option<Decimal>>(0)?
             .unwrap_or(dec!(0)))
@@ -155,30 +145,28 @@ impl Malta {
             .take(0)
     }
 
-    pub async fn add_employee(
-        &self,
-        create_info: CreateEmployee,
-    ) -> std::result::Result<(), String> {
+    pub async fn add_employee(&self, create_info: CreateEmployee) -> Result<()> {
         self.0
             .create::<Option<FakeID>>("employee")
             .content(create_info)
-            .await
-            .map_err(|e| format!("{e}"))?;
+            .await?;
         Ok(())
     }
-    pub async fn add_tool(&self, create_info: CreateTool) -> std::result::Result<(), String> {
+    pub async fn add_tool(&self, create_info: CreateTool) -> Result<()> {
         self.0
             .create::<Option<FakeID>>("tool")
             .content(create_info)
-            .await
-            .map_err(|e| format!("{e}"))?;
+            .await?;
         Ok(())
     }
     pub async fn get_project(&self, record: RecordIdKey) -> Result<Option<Project>> {
         self.0.select(("project", record)).await
     }
     pub async fn get_all_projects(&self) -> Result<Vec<Project>> {
-        self.0.select("project").await
+        self.0
+            .query(include_str!("../queries/get_all_projects.surql"))
+            .await?
+            .take(0)
     }
     pub async fn get_employee(&self, record: RecordIdKey) -> Result<Option<Employee>> {
         self.0.select(("employee", record)).await
@@ -211,3 +199,7 @@ impl Malta {
             .map(|b| b.is_some())
     }
 }
+
+pub use serde;
+pub use surrealdb;
+pub use tracing;

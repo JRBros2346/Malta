@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Project {{ project.name }}{% endblock %}
+{% block content %}
+<h1>{{ project.name }}</h1>
+<p><strong>Estimate:</strong> {{ project.estimate }}</p>
+<h2>Income</h2>
+<ul>
+    {% for inc in project.income %}
+    <li><a href="/income/{{ inc.id }}">{{ inc.date.format("%Y-%m-%d") }}: {{ inc.amount }}</a></li>
+    {% endfor %}
+</ul>
+<h2>Expenses</h2>
+<ul>
+    {% for exp in project.expenses %}
+    <li>{{ exp.date.format("%Y-%m-%d") }}: {{ exp.amount }} ({{ exp.category }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}

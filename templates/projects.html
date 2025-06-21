@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+<h1>Projects</h1>
+<ul>
+    {% for project in projects %}
+    <li><a href="/projects/{{ project.id }}">{{ project.name }}</a> &ndash; Income: {{ project.income }} Expense: {{
+        project.expense }} {% if let Some(est) = project.estimate %}
+        Estimate: {{ est }}
+        {% endif %}</li>
+    {% endfor %}
+</ul>
+<h1>New Project</h1>
+<form action="/projects" method="post">
+    <label for="name">Name:</label>
+    <input type="text" name="name" id="name"><br>
+    <label for="estimate">Estimate:</label>
+    <input type="number" name="estimate" id="estimate"><br>
+    <input type="submit" value="Create">
+</form>
+<script>
+    document.forms[0].addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = new FormData(document.forms[0]);
+        try {
+            const res = await fetch('/projects', {
+                method: 'POST',
+                body: JSON.stringify({
+                    'name': form.get('name'),
+                    'estimate': Number(form.get('estimate')),
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await res.json();
+            console.log(result);
+            if (res.ok) {
+                location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+</script>
+{% endblock %}

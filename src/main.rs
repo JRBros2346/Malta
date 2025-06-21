@@ -1,14 +1,22 @@
+use axum::{routing, Router};
+use malta_core::{tracing::Level, Malta};
+use tokio::net::TcpListener;
+use tower_http::trace::TraceLayer;
+
 mod views;
 
-use malta_core::Malta;
-use views::*;
-
-struct State {
-    db: Malta,
-}
-
-fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // let app = Xilem::new((), app_logic);
-    // app.run_windowed(EventLoop::with_user_event(), "Malta".to_string())?;
-    Ok(())
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(Level::DEBUG)
+        .init();
+    let state = Malta::open().await.unwrap();
+    let app = Router::new()
+        .route("/projects", routing::get(views::get_projects))
+        .route("/projects", routing::post(views::create_project))
+        .fallback(views::not_found)
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
+    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
