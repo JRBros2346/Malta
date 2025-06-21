@@ -1,0 +1,41 @@
+#V2
+help
+login
+help
+login
+SELECT * FROM project
+use ns malt
+use ns malta
+use db malta
+help
+SELECT * FROM project
+SELECT * FROM project:e3x6itfvdzfe9y4x0i01
+SELECT id, name, estimate, math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) as income, math::sum((SELECT VALUE amount FROM expense WHERE id[1] = $parent.id)) as expense FROM type::thing("project",$record);
+SELECT id, name, estimate, math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) as income, math::sum((SELECT VALUE amount FROM expense WHERE id[1] = $parent.id)) as expense FROM type::thing("project","zm5334oxw9zy63bk9zc5");
+SELECT id, name, estimate, math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) as income, math::sum((SELECT VALUE amount FROM expense WHERE id[1] = $parent.id)) as expense FROM project:zm5334oxw9zy63bk9zc5;
+exit
+malta
+use ns malta
+use db malta
+SELECT id, name, estimate, math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) as income, math::sum((SELECT VALUE amount FROM expense WHERE id[1] = $parent.id)) as expense FROM project:zm5334oxw9zy63bk9zc5;
+SELECT id, name, estimate, math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) as income, math::sum((SELECT VALUE amount FROM expense WHERE id[1] = $parent.id)) as expense FROM project;
+SELECT id FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income)) as income FROM project
+SELECT * FROM income
+SELECT math::sum((SELECT VALUE amount FROM income)) as income FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[0] = $parent.id)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[1] = $parent.id)) FROM project
+SELECT * FROM income;
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[0] = $parent.id)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income)) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[0])) FROM project
+SELECT math::sum((SELECT VALUE amount FROM income WHERE id[0] <= time::now())) FROM project
+math::sum((SELECT VALUE amount FROM income WHERE id[0] <= time::now()))
+SELECT VALUE amount FROM income WHERE id[0] <= time::now()
+SELECT VALUE amount FROM income
+SELECT VALUE amount FROM income WHERE id[0] = $parent.id

@@ -10,7 +10,7 @@ pub use models::{
 use once_cell::sync::Lazy;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
-use surrealdb::{engine::local::Db, Datetime, RecordIdKey, Result, Surreal};
+use surrealdb::{engine::local::Db, Datetime, RecordId, RecordIdKey, Result, Surreal};
 
 static DB_PATH: Lazy<PathBuf> = Lazy::new(|| {
     std::env::current_exe()
@@ -145,6 +145,21 @@ impl Malta {
             .take(0)
     }
 
+    pub async fn get_project_incomes(&self, project: RecordIdKey) -> Result<Vec<GeneralIncome>> {
+        self.0
+            .query(include_str!("../queries/get_project_incomes.surql"))
+            .bind(("source", project))
+            .await?
+            .take(0)
+    }
+    pub async fn get_project_expenses(&self, project: RecordIdKey) -> Result<Vec<GeneralExpense>> {
+        self.0
+            .query(include_str!("../queries/get_project_expenses.surql"))
+            .bind(("source", project))
+            .await?
+            .take(0)
+    }
+
     pub async fn add_employee(&self, create_info: CreateEmployee) -> Result<()> {
         self.0
             .create::<Option<FakeID>>("employee")
@@ -159,8 +174,12 @@ impl Malta {
             .await?;
         Ok(())
     }
-    pub async fn get_project(&self, record: RecordIdKey) -> Result<Option<Project>> {
-        self.0.select(("project", record)).await
+    pub async fn get_project(&self, record: RecordId) -> Result<Option<Project>> {
+        self.0
+            .query(include_str!("../queries/get_project.surql"))
+            .bind(("record", record))
+            .await?
+            .take(0)
     }
     pub async fn get_all_projects(&self) -> Result<Vec<Project>> {
         self.0
@@ -203,3 +222,4 @@ impl Malta {
 pub use serde;
 pub use surrealdb;
 pub use tracing;
+use tracing::instrument;

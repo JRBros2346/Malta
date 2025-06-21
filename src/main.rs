@@ -12,8 +12,11 @@ async fn main() {
         .init();
     let state = Malta::open().await.unwrap();
     let app = Router::new()
-        .route("/projects", routing::get(views::get_projects))
-        .route("/projects", routing::post(views::create_project))
+        .route("/projects", routing::get(views::get_all_projects))
+        .route("/projects/{id}", routing::get(views::get_project))
+        .route("/api/projects", routing::post(views::create_project))
+        // .route("/api/projects/income", routing::post(views::add_income))
+        // .route("/api/projects/expense", routing::post(views::add_expense))
         .fallback(views::not_found)
         .layer(TraceLayer::new_for_http())
         .with_state(state);

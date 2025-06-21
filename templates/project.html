@@ -1,18 +1,89 @@
 {% extends "base.html" %}
-{% block title %}Project {{ project.name }}{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
 {% block content %}
-<h1>{{ project.name }}</h1>
-<p><strong>Estimate:</strong> {{ project.estimate }}</p>
-<h2>Income</h2>
+<h1>Project: {{ project.name }}</h1>
+{% if let Some(est) = project.estimate %}
+<h1>Estimate: {{ est }}</h1>
+{% endif %}
+<h1>Income: {{ project.income }}</h1>
 <ul>
-    {% for inc in project.income %}
-    <li><a href="/income/{{ inc.id }}">{{ inc.date.format("%Y-%m-%d") }}: {{ inc.amount }}</a></li>
+    {% for income in incomes %}
+    <li>{{ income.amount }} ({{ income.on_date }})</li>
     {% endfor %}
 </ul>
-<h2>Expenses</h2>
+<form>
+    <input type="text" name="source" value="{{ project.id }}" hidden><br>
+    <label for="date">Date:</label>
+    <input type="date" name="date"><br>
+    <label for="amount">Amount:</label>
+    <input type="number" name="amount"><br>
+    <input type="submit" value="Add">
+</form>
+<h1>Expense: {{ project.expense }}</h1>
 <ul>
-    {% for exp in project.expenses %}
-    <li>{{ exp.date.format("%Y-%m-%d") }}: {{ exp.amount }} ({{ exp.category }})</li>
+    {% for expense in expenses %}
+    <li>{{ expense.amount }} - {{ expense.reason }} ({{ expense.on_date }})</li>
     {% endfor %}
 </ul>
+<form>
+    <input type="text" name="project" value="{{ project.id }}" hidden><br>
+    <label for="date">Date:</label>
+    <input type="date" name="date" id="date"><br>
+    <label for="reason">Reason:</label>
+    <input type="text" name="reason"><br>
+    <label for="amount">Amount:</label>
+    <input type="number" name="amount"><br>
+    <input type="submit" value="Add">
+</form>
+<script>
+    document.forms[0].addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = new FormData(document.forms[0]);
+        try {
+            const res = await fetch('/api/projects/income', {
+                method: 'POST',
+                body: JSON.stringify({
+                    'source': form.get('source'),
+                    'on_date': form.get('date'),
+                    'amount': Number(form.get('amount')),
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await res.json();
+            console.log(result);
+            if (res.ok) {
+                location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+
+    document.forms[1].addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = new FormData(document.forms[1]);
+        try {
+            const res = await fetch('/api/projects/expense', {
+                method: 'POST',
+                body: JSON.stringify({
+                    'project': form.get('project'),
+                    'on_date': form.get('date'),
+                    'amount': Number(form.get('amount')),
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await res.json();
+            console.log(result);
+            if (res.ok) {
+                location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    });
+</script>
 {% endblock %}
